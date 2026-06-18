@@ -18,5 +18,6 @@
 
 // Device
 #include <pythonvk/device/physical_device.h>
+#include <pythonvk/device/logical_device.h>
 
 #endif

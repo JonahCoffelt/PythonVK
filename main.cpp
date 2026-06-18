@@ -114,9 +114,7 @@ private:
     Debugger* debugger;
     Surface* surface;
     PhysicalDevice* physicalDevice;
-
-    // Device
-    VkDevice device;
+    LogicalDevice* logicalDevice;
 
     // Swap chain
     VkSwapchainKHR swapChain;
@@ -126,10 +124,6 @@ private:
 
     // Image Views
     std::vector<VkImageView> swapChainImageViews;
-
-    // Queues
-    VkQueue graphicsQueue;
-    VkQueue presentQueue;
 
     // Pipeline
     VkPipeline graphicsPipeline;
@@ -156,9 +150,9 @@ private:
         if (enableValidationLayers) { debugger = new Debugger(instance); }
         window = new Window("PythonVK", 800, 600);
         surface = new Surface(instance, window);
-
         pickPhysicalDevice();
-        createLogicalDevice();
+        logicalDevice = new LogicalDevice(physicalDevice, REQUIRED_DEVICE_EXTENSIONS, PREFERED_DEVICE_EXTENSIONS);
+        
         createSwapChain();
         createImageViews();
         createRenderPass();
@@ -192,56 +186,6 @@ private:
         // Create physical device object from best device
         physicalDevice = new PhysicalDevice(bestDevice->getHandle(), surface);
         std::cout << "Using device: " << physicalDevice->getName() << std::endl;
-    }
-
-    void createLogicalDevice() {
-        // Find queue families
-        QueueFamilyIndices indices = physicalDevice->getQueueFamilyIndices();
-
-        // Get the unique queues
-        std::set<uint32_t> uniqueQueueFamilies = {
-            indices.graphicsFamily.value(), 
-            indices.presentFamily.value()
-        };
-
-        // Priority for queue scheduling (required even for one queue)
-        float queuePriority = 1.0f;
-        
-        // Get info for all queues
-        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-        for (uint32_t queueFamily : uniqueQueueFamilies) {
-            VkDeviceQueueCreateInfo queueCreateInfo{};
-            queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            queueCreateInfo.queueFamilyIndex = queueFamily;
-            queueCreateInfo.queueCount = 1;
-            queueCreateInfo.pQueuePriorities = &queuePriority;
-            queueCreateInfos.push_back(queueCreateInfo);
-        }
-
-        // Leave empty for now
-        VkPhysicalDeviceFeatures deviceFeatures{};
-
-        // Device info
-        VkDeviceCreateInfo createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        createInfo.pQueueCreateInfos = queueCreateInfos.data();
-        createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-        createInfo.pEnabledFeatures = &deviceFeatures;
-        std::vector<const char*> requestedExtensions(REQUIRED_DEVICE_EXTENSIONS.begin(), REQUIRED_DEVICE_EXTENSIONS.end());
-        requestedExtensions.insert(requestedExtensions.end(), PREFERED_DEVICE_EXTENSIONS.begin(), PREFERED_DEVICE_EXTENSIONS.end());
-        auto enabledExtensions = physicalDevice->getEnabledExtensionsList(requestedExtensions);
-        createInfo.enabledExtensionCount = static_cast<uint32_t>(enabledExtensions.size());
-        createInfo.ppEnabledExtensionNames = enabledExtensions.data();
-
-        // Create the logical device
-        VkResult result = vkCreateDevice(physicalDevice->getHandle(), &createInfo, nullptr, &device);
-        if (result != VK_SUCCESS) {
-            throw std::runtime_error("failed to create logical device!");
-        }
-
-        // Retrieve queue handles
-        vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
-        vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
     }
 
     void createSwapChain() {
@@ -293,15 +237,15 @@ private:
         createInfo.oldSwapchain = VK_NULL_HANDLE;  // For when swap chain becomes invalid (eg window resize)
     
         // Create the swap chain
-        VkResult result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain);
+        VkResult result = vkCreateSwapchainKHR(logicalDevice->getHandle(), &createInfo, nullptr, &swapChain);
         if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to create swap chain!");
         }
 
         // Get the images from the newly created swap chain
-        vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+        vkGetSwapchainImagesKHR(logicalDevice->getHandle(), swapChain, &imageCount, nullptr);
         swapChainImages.resize(imageCount);
-        vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+        vkGetSwapchainImagesKHR(logicalDevice->getHandle(), swapChain, &imageCount, swapChainImages.data());
 
         // Save some swap chain details
         swapChainImageFormat = surfaceFormat.format;
@@ -336,7 +280,7 @@ private:
             createInfo.subresourceRange.layerCount = 1;
 
             // Create the image view
-            VkResult result = vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]);
+            VkResult result = vkCreateImageView(logicalDevice->getHandle(), &createInfo, nullptr, &swapChainImageViews[i]);
             if (result != VK_SUCCESS) {
                 throw std::runtime_error("failed to create image views!");
             }
@@ -349,8 +293,8 @@ private:
         auto fragShaderCode = readFile("shaders/shader.frag.spv");
 
         // Create modules from code
-        VkShaderModule vertShaderModule = createShaderModule(device, vertShaderCode);
-        VkShaderModule fragShaderModule = createShaderModule(device, fragShaderCode);
+        VkShaderModule vertShaderModule = createShaderModule(logicalDevice->getHandle(), vertShaderCode);
+        VkShaderModule fragShaderModule = createShaderModule(logicalDevice->getHandle(), fragShaderCode);
 
         // Shader stage info for vertex shader
         VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
@@ -468,7 +412,7 @@ private:
         pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
         pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-        VkResult result = vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
+        VkResult result = vkCreatePipelineLayout(logicalDevice->getHandle(), &pipelineLayoutInfo, nullptr, &pipelineLayout);
         if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
         }
@@ -492,14 +436,14 @@ private:
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
         pipelineInfo.basePipelineIndex = -1; // Optional
 
-        result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
+        result = vkCreateGraphicsPipelines(logicalDevice->getHandle(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
         if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to create graphics pipeline!");
         }
 
         // Destroy modules
-        vkDestroyShaderModule(device, fragShaderModule, nullptr);
-        vkDestroyShaderModule(device, vertShaderModule, nullptr);
+        vkDestroyShaderModule(logicalDevice->getHandle(), fragShaderModule, nullptr);
+        vkDestroyShaderModule(logicalDevice->getHandle(), vertShaderModule, nullptr);
 
     }
 
@@ -550,7 +494,7 @@ private:
         renderPassInfo.dependencyCount = 1;
         renderPassInfo.pDependencies = &dependency;
 
-        VkResult result = vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass);
+        VkResult result = vkCreateRenderPass(logicalDevice->getHandle(), &renderPassInfo, nullptr, &renderPass);
         if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to create render pass!");
         }
@@ -574,7 +518,7 @@ private:
             framebufferInfo.height = swapChainExtent.height;
             framebufferInfo.layers = 1;
 
-            VkResult result = vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]);
+            VkResult result = vkCreateFramebuffer(logicalDevice->getHandle(), &framebufferInfo, nullptr, &swapChainFramebuffers[i]);
             if (result != VK_SUCCESS) {
                 throw std::runtime_error("failed to create framebuffer!");
             }
@@ -589,7 +533,7 @@ private:
         poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
-        VkResult result = vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool);
+        VkResult result = vkCreateCommandPool(logicalDevice->getHandle(), &poolInfo, nullptr, &commandPool);
         if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to create command pool!");
         }
@@ -605,7 +549,7 @@ private:
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         allocInfo.commandBufferCount = (uint32_t) commandBuffers.size();
 
-        VkResult result = vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data());
+        VkResult result = vkAllocateCommandBuffers(logicalDevice->getHandle(), &allocInfo, commandBuffers.data());
         if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate command buffers!");
         }
@@ -681,14 +625,14 @@ private:
 
         // Create MAX_FRAMES_IN_FLIGHT imageAvailableSemaphores and inFlightFences
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-                vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
+            if (vkCreateSemaphore(logicalDevice->getHandle(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
+                vkCreateFence(logicalDevice->getHandle(), &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
                 throw std::runtime_error("failed to create sync objects!");
             }
         }
         // Create swapChainImages.size() renderFinishedSemaphores
         for (size_t i = 0; i < swapChainImages.size(); i++) {
-            if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS) {
+            if (vkCreateSemaphore(logicalDevice->getHandle(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS) {
                 throw std::runtime_error("failed to create renderFinished semaphores!");
             }
         }
@@ -700,18 +644,18 @@ private:
             drawFrame();
         }
 
-        vkDeviceWaitIdle(device);
+        logicalDevice->waitIdle();
     }
 
     void drawFrame() {
         // Make sure no other frame is rendering
-        vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+        vkWaitForFences(logicalDevice->getHandle(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
         // Reset fence
-        vkResetFences(device, 1, &inFlightFences[currentFrame]);
+        vkResetFences(logicalDevice->getHandle(), 1, &inFlightFences[currentFrame]);
 
         // Aquire Image from swap chain
         uint32_t imageIndex;
-        vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+        vkAcquireNextImageKHR(logicalDevice->getHandle(), swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
         // Record the command buffer
         vkResetCommandBuffer(commandBuffers[currentFrame], 0);
@@ -735,7 +679,7 @@ private:
         submitInfo.pSignalSemaphores = signalSemaphores;
 
         // Use inFlightFence so the next frame will wait on this command queue
-        VkResult result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]);
+        VkResult result = vkQueueSubmit(logicalDevice->getGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]);
         if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to submit draw command buffer!");
         }
@@ -751,7 +695,7 @@ private:
         presentInfo.pImageIndices = &imageIndex;
         presentInfo.pResults = nullptr; // Optional
 
-        vkQueuePresentKHR(presentQueue, &presentInfo);
+        vkQueuePresentKHR(logicalDevice->getPresentQueue(), &presentInfo);
 
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
@@ -764,36 +708,35 @@ private:
 
         // Destroy synchronization objects
         for (size_t i = 0; i < swapChainImages.size(); i++) {
-            vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+            vkDestroySemaphore(logicalDevice->getHandle(), renderFinishedSemaphores[i], nullptr);
         }
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-            vkDestroyFence(device, inFlightFences[i], nullptr);
+            vkDestroySemaphore(logicalDevice->getHandle(), imageAvailableSemaphores[i], nullptr);
+            vkDestroyFence(logicalDevice->getHandle(), inFlightFences[i], nullptr);
         }
 
         // Destroy command buffers
-        vkDestroyCommandPool(device, commandPool, nullptr);
+        vkDestroyCommandPool(logicalDevice->getHandle(), commandPool, nullptr);
 
         // Destroy all framebuffer (must happen before image pipeline destroy)
         for (auto framebuffer : swapChainFramebuffers) {
-            vkDestroyFramebuffer(device, framebuffer, nullptr);
+            vkDestroyFramebuffer(logicalDevice->getHandle(), framebuffer, nullptr);
         }
 
         // Destory all image views
         for (auto imageView : swapChainImageViews) {
-            vkDestroyImageView(device, imageView, nullptr);
+            vkDestroyImageView(logicalDevice->getHandle(), imageView, nullptr);
         }
 
         // Destroy pipeline
-        vkDestroyPipeline(device, graphicsPipeline, nullptr);
-        vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-        vkDestroyRenderPass(device, renderPass, nullptr);
+        vkDestroyPipeline(logicalDevice->getHandle(), graphicsPipeline, nullptr);
+        vkDestroyPipelineLayout(logicalDevice->getHandle(), pipelineLayout, nullptr);
+        vkDestroyRenderPass(logicalDevice->getHandle(), renderPass, nullptr);
 
         // Destroy swap chain
-        vkDestroySwapchainKHR(device, swapChain, nullptr);
+        vkDestroySwapchainKHR(logicalDevice->getHandle(), swapChain, nullptr);
 
-        // Destroy logical device
-        vkDestroyDevice(device, nullptr);
+        delete logicalDevice;
 
         delete physicalDevice;
         delete surface;

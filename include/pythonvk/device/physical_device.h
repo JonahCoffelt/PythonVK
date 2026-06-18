@@ -14,10 +14,6 @@ struct QueueFamilyIndices {
     std::optional<uint32_t> transferFamily;
     std::optional<uint32_t> sparseBindingFamily;
     std::optional<uint32_t> presentFamily;
-
-    bool isComplete() {
-        return graphicsFamily.has_value() && presentFamily.has_value();
-    }
 };
 
 struct SwapChainSupportDetails {
@@ -73,6 +69,11 @@ class PhysicalDevice {
         inline bool hasTransferFamily() { return queueFamilyIndices.transferFamily.has_value(); }
         inline bool hasSparseBindingFamily() { return queueFamilyIndices.sparseBindingFamily.has_value(); }
         inline bool hasPresentFamily() { return queueFamilyIndices.presentFamily.has_value(); }
+        inline uint32_t getGraphicsFamilyIndex() { return queueFamilyIndices.graphicsFamily.value(); }
+        inline uint32_t getComputeFamilyIndex() { return queueFamilyIndices.computeFamily.value(); }
+        inline uint32_t getTransferFamilyIndex() { return queueFamilyIndices.transferFamily.value(); }
+        inline uint32_t getSparseBindingFamilyIndex() { return queueFamilyIndices.sparseBindingFamily.value(); }
+        inline uint32_t getPresentFamilyIndex() { return queueFamilyIndices.presentFamily.value(); }
 
         // Swap Chain
         inline SwapChainSupportDetails& getSwapChainDetails() { return swapChainDetails; }
