@@ -12,19 +12,23 @@ class LogicalDevice {
         VkDevice device = VK_NULL_HANDLE;
         PhysicalDevice* physicalDevice;
 
+        VkDeviceCreateInfo createInfo{};
+        VkPhysicalDeviceFeatures deviceFeatures{};
+        std::vector<const char*> enabledExtensions;
+        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+
+        std::vector<uint32_t> queueFamilyIndices;
         std::optional<VkQueue> graphicsQueue;
         std::optional<VkQueue> presentQueue;
         std::optional<VkQueue> computeQueue;
         std::optional<VkQueue> transferQueue;
         std::optional<VkQueue> sparseBindingQueue;
 
-        VkDeviceCreateInfo getDeviceCreateInfo(
-            const std::vector<VkDeviceQueueCreateInfo>& queueCreateInfos,
-            const VkPhysicalDeviceFeatures& deviceFeatures,
-            const std::vector<const char*>& enabledExtensions
-        );
-        std::set<uint32_t> getUniqueQueueFamilies();
-        std::vector<VkDeviceQueueCreateInfo> getQueueCreateInfos();
+        void setDeviceCreateInfo();
+        void setQueueFamilyIndices();
+        void setQueueCreateInfos();
+        void setDeviceFeatures();
+        void setEnabledExtensions(std::vector<const char*> requiredExtensions, std::vector<const char*> preferredExtensions);
         void retrieveQueues();
 
     public:
@@ -35,6 +39,11 @@ class LogicalDevice {
 
         inline VkDevice getHandle() { return device; }
         inline PhysicalDevice* getPhysicalDevice() { return physicalDevice; }
+        inline std::vector<uint32_t> getQueueFamilyIndices() { return queueFamilyIndices; }
+        inline VkDeviceCreateInfo getCreateInfo() { return createInfo; }
+        inline VkPhysicalDeviceFeatures getDeviceFeatures() { return deviceFeatures; }
+        inline std::vector<const char*> getEnabledExtensions() { return enabledExtensions; }
+        inline std::vector<VkDeviceQueueCreateInfo> getQueueCreateInfos() { return queueCreateInfos; }
 
         void waitIdle();
 

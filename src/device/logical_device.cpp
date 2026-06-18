@@ -6,18 +6,12 @@
  * @param physicalDevice 
  */
 LogicalDevice::LogicalDevice(PhysicalDevice* physicalDevice, std::vector<const char*> requiredExtensions, std::vector<const char*> preferredExtensions): physicalDevice(physicalDevice) {
-    // Get queue create infos
-    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos = getQueueCreateInfos();
-    // Leave device features empty for now
-    VkPhysicalDeviceFeatures deviceFeatures{};
-    // Get enabled extensions
-    std::vector<const char*> requestedExtensions(requiredExtensions.begin(), requiredExtensions.end());
-    requestedExtensions.insert(requestedExtensions.end(), preferredExtensions.begin(), preferredExtensions.end());
-    std::vector<const char*> enabledExtensions = physicalDevice->getEnabledExtensionsList(requestedExtensions);
+    setQueueFamilyIndices();
+    setDeviceFeatures();
+    setQueueCreateInfos();
+    setEnabledExtensions(requiredExtensions, preferredExtensions);
+    setDeviceCreateInfo();
 
-    // Get device create info
-    VkDeviceCreateInfo createInfo = getDeviceCreateInfo(queueCreateInfos, deviceFeatures, enabledExtensions);
-    
     // Create the logical device
     VkResult result = vkCreateDevice(physicalDevice->getHandle(), &createInfo, nullptr, &device);
     if (result != VK_SUCCESS) {
@@ -32,67 +26,62 @@ void LogicalDevice::waitIdle() {
     vkDeviceWaitIdle(device);
 }
 
-VkDeviceCreateInfo LogicalDevice::getDeviceCreateInfo(
-    const std::vector<VkDeviceQueueCreateInfo>& queueCreateInfos,
-    const VkPhysicalDeviceFeatures& deviceFeatures,
-    const std::vector<const char*>& enabledExtensions
-) {
-    VkDeviceCreateInfo createInfo{};
+void LogicalDevice::setDeviceCreateInfo() {
+    createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
     createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
     createInfo.pEnabledFeatures = &deviceFeatures;
     createInfo.enabledExtensionCount = static_cast<uint32_t>(enabledExtensions.size());
     createInfo.ppEnabledExtensionNames = enabledExtensions.data();
-
-    return createInfo;
 }
 
-std::set<uint32_t> LogicalDevice::getUniqueQueueFamilies() {
-    std::set<uint32_t> uniqueQueueFamilies;
+void LogicalDevice::setDeviceFeatures() {
+    deviceFeatures = {};
+}
 
-    // Add all queue families that are present
+void LogicalDevice::setEnabledExtensions(std::vector<const char*> requiredExtensions, std::vector<const char*> preferredExtensions) {
+    std::vector<const char*> requestedExtensions(requiredExtensions.begin(), requiredExtensions.end());
+    requestedExtensions.insert(requestedExtensions.end(), preferredExtensions.begin(), preferredExtensions.end());
+    enabledExtensions = physicalDevice->getEnabledExtensionsList(requestedExtensions);
+}
+
+void LogicalDevice::setQueueFamilyIndices() {
+    queueFamilyIndices.clear();
+
+    std::set<uint32_t> uniqueFamilies;
     if (physicalDevice->hasGraphicsFamily()) {
-        uniqueQueueFamilies.insert(physicalDevice->getGraphicsFamilyIndex());
+        uniqueFamilies.insert(physicalDevice->getGraphicsFamilyIndex());
     }
     if (physicalDevice->hasPresentFamily()) {
-        uniqueQueueFamilies.insert(physicalDevice->getPresentFamilyIndex());
+        uniqueFamilies.insert(physicalDevice->getPresentFamilyIndex());
     }
     if (physicalDevice->hasComputeFamily()) {
-        uniqueQueueFamilies.insert(physicalDevice->getComputeFamilyIndex());
+        uniqueFamilies.insert(physicalDevice->getComputeFamilyIndex());
     }
     if (physicalDevice->hasTransferFamily()) {
-        uniqueQueueFamilies.insert(physicalDevice->getTransferFamilyIndex());
+        uniqueFamilies.insert(physicalDevice->getTransferFamilyIndex());
     }
     if (physicalDevice->hasSparseBindingFamily()) {
-        uniqueQueueFamilies.insert(physicalDevice->getSparseBindingFamilyIndex());
+        uniqueFamilies.insert(physicalDevice->getSparseBindingFamilyIndex());
     }
 
-    return uniqueQueueFamilies;
+    queueFamilyIndices.assign(uniqueFamilies.begin(), uniqueFamilies.end());
 }
 
-std::vector<VkDeviceQueueCreateInfo> LogicalDevice::getQueueCreateInfos() {
-    // Get the unique queue families
-    std::set<uint32_t> uniqueQueueFamilies = getUniqueQueueFamilies();
-    // Priority for queue scheduling (required even for one queue)
+void LogicalDevice::setQueueCreateInfos() {
+    queueCreateInfos.clear();
+
     float queuePriority = 1.0f;
-    
-    // Get info for all queues
-    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    // Create info for each queue
-    for (uint32_t queueFamily : uniqueQueueFamilies) {
-        // Create queue create info
+
+    for (uint32_t queueFamily : queueFamilyIndices) {
         VkDeviceQueueCreateInfo queueCreateInfo{};
-        // Fill info
         queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         queueCreateInfo.queueFamilyIndex = queueFamily;
         queueCreateInfo.queueCount = 1;
         queueCreateInfo.pQueuePriorities = &queuePriority;
-        // Add to list
         queueCreateInfos.push_back(queueCreateInfo);
     }
-
-    return queueCreateInfos;
 }
 
 void LogicalDevice::retrieveQueues() {
