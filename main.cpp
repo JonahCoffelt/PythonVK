@@ -37,9 +37,7 @@ private:
     SwapChain* swapChain;
     RenderPass* renderPass;
     GraphicsPipeline* graphicsPipeline;
-
-    // Framebuffers
-    std::vector<VkFramebuffer> swapChainFramebuffers;
+    std::vector<Framebuffer*> swapChainFramebuffers;
 
     // Command Buffers
     VkCommandPool commandPool;
@@ -61,9 +59,8 @@ private:
         swapChain = new SwapChain(physicalDevice, logicalDevice, surface);
         renderPass = new RenderPass(logicalDevice, swapChain);
         graphicsPipeline = new GraphicsPipeline(logicalDevice, renderPass, "shaders/shader.vert.spv", "shaders/shader.frag.spv");
-        
-        // createGraphicsPipeline();
         createFramebuffers();
+        
         createCommandPool();
         createCommandBuffers();
         createSyncObjects();
@@ -95,27 +92,11 @@ private:
     }
 
     void createFramebuffers() {
-        swapChainFramebuffers.resize(swapChain->getImageCount());
-
         // Loop through images and create a framebuffer
         for (size_t i = 0; i < swapChain->getImageCount(); i++) {
-            VkImageView attachments[] = {
-                swapChain->getImageViews()[i]
-            };
-
-            VkFramebufferCreateInfo framebufferInfo{};
-            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-            framebufferInfo.renderPass = renderPass->getHandle();
-            framebufferInfo.attachmentCount = 1;
-            framebufferInfo.pAttachments = attachments;
-            framebufferInfo.width = swapChain->getExtent().width;
-            framebufferInfo.height = swapChain->getExtent().height;
-            framebufferInfo.layers = 1;
-
-            VkResult result = vkCreateFramebuffer(logicalDevice->getHandle(), &framebufferInfo, nullptr, &swapChainFramebuffers[i]);
-            if (result != VK_SUCCESS) {
-                throw std::runtime_error("failed to create framebuffer!");
-            }
+            std::vector<VkImageView> attachments = { swapChain->getImageViews()[i] };
+            Framebuffer* framebuffer = new Framebuffer(logicalDevice, renderPass, attachments, 1);
+            swapChainFramebuffers.push_back(framebuffer);
         }
     }
 
@@ -164,7 +145,7 @@ private:
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassInfo.renderPass = renderPass->getHandle();
-        renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+        renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex]->getHandle();
         renderPassInfo.renderArea.offset = {0, 0};
         renderPassInfo.renderArea.extent = swapChain->getExtent();
         
@@ -314,7 +295,7 @@ private:
 
         // Destroy all framebuffer (must happen before image pipeline destroy)
         for (auto framebuffer : swapChainFramebuffers) {
-            vkDestroyFramebuffer(logicalDevice->getHandle(), framebuffer, nullptr);
+            delete framebuffer;
         }
 
         delete graphicsPipeline;

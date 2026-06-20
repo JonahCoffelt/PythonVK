@@ -19,6 +19,7 @@
 #include <pythonvk/render/render_pass.h>
 #include <pythonvk/render/graphics_pipeline.h>
 #include <pythonvk/render/shader_module.h>
+#include <pythonvk/render/framebuffer.h>
 
 // Device
 #include <pythonvk/device/physical_device.h>
