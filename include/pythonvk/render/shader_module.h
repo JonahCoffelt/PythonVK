@@ -21,10 +21,12 @@ class ShaderModule {
     public:
         ShaderModule(LogicalDevice* device, const std::string& filename);
         ~ShaderModule();
+        ShaderModule(const ShaderModule&) = delete;
+        ShaderModule& operator=(const ShaderModule&) = delete;
 
         inline VkShaderModule getHandle() { return shaderModule; }
         inline LogicalDevice* getDevice() { return device; }
-        inline VkShaderModuleCreateInfo getCreateInfo() { return createInfo; }
+        inline const VkShaderModuleCreateInfo& getCreateInfo() const { return createInfo; }
 
 };
 

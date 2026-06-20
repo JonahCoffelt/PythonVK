@@ -61,7 +61,7 @@ void SwapChain::setCreateInfo() {
 
 void SwapChain::setSwapSurfaceFormat(VkFormat preferredFormat, VkColorSpaceKHR preferredColorSpace) {
     // Get available surface formats on the physical device
-    std::vector<VkSurfaceFormatKHR> availableFormats = physicalDevice->getSurfaceFormats();
+    const std::vector<VkSurfaceFormatKHR>& availableFormats = physicalDevice->getSurfaceFormats();
     
     // Loop through available formats and find the preferred format
     for (const auto& availableFormat : availableFormats) {
@@ -77,7 +77,7 @@ void SwapChain::setSwapSurfaceFormat(VkFormat preferredFormat, VkColorSpaceKHR p
 
 void SwapChain::setSwapPresentMode(VkPresentModeKHR preferredMode) {
     // Get available present modes on the physical device
-    std::vector<VkPresentModeKHR> availablePresentModes = physicalDevice->getPresentModes();
+    const std::vector<VkPresentModeKHR>& availablePresentModes = physicalDevice->getPresentModes();
 
     // Loop through available present modes and find the preferred present mode
     for (const auto& availablePresentMode : availablePresentModes) {

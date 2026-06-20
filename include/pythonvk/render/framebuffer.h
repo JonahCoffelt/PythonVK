@@ -14,7 +14,7 @@ class Framebuffer {
         RenderPass* renderPass;
         SwapChain* swapChain;
 
-        VkFramebuffer framebuffer;
+        VkFramebuffer framebuffer = VK_NULL_HANDLE;
 
         VkFramebufferCreateInfo framebufferInfo;
         std::vector<VkImageView> attachments;
@@ -26,14 +26,16 @@ class Framebuffer {
     public:
         Framebuffer(LogicalDevice* device, RenderPass* renderPass, std::vector<VkImageView> attachments, uint32_t layers = 1);
         ~Framebuffer();
+        Framebuffer(const Framebuffer&) = delete;
+        Framebuffer& operator=(const Framebuffer&) = delete;
 
         inline VkFramebuffer getHandle() { return framebuffer; }
         inline RenderPass* getRenderPass() { return renderPass; }
         inline SwapChain* getSwapChain() { return swapChain; }
-        inline VkFramebufferCreateInfo getFramebufferInfo() { return framebufferInfo; }
-        inline std::vector<VkImageView> getAttachments() { return attachments; }
-        inline VkExtent2D getExtent() { return extent; }
-        inline uint32_t getLayers() { return layers; }
+        inline const VkFramebufferCreateInfo& getFramebufferInfo() const { return framebufferInfo; }
+        inline const std::vector<VkImageView>& getAttachments() const { return attachments; }
+        inline const VkExtent2D& getExtent() const { return extent; }
+        inline uint32_t getLayers() const { return layers; }
 };
 
 #endif

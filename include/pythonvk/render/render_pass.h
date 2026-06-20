@@ -29,13 +29,15 @@ class RenderPass {
     public:
         RenderPass(LogicalDevice* device, SwapChain* swapChain);
         ~RenderPass();
+        RenderPass(const RenderPass&) = delete;
+        RenderPass& operator=(const RenderPass&) = delete;
 
         inline VkRenderPass getHandle() { return renderPass; }
-        inline VkRenderPassCreateInfo getRenderPassCreateInfo() { return renderPassCreateInfo; }
-        inline VkAttachmentDescription getAttachmentDescription() { return attachmentDescription; }
-        inline VkAttachmentReference getAttachmentReference() { return attachmentReference; }
-        inline VkSubpassDescription getSubpassDescription() { return subpassDescription; }
-        inline VkSubpassDependency getSubpassDependency() { return subpassDependency; }
+        inline const VkRenderPassCreateInfo& getRenderPassCreateInfo() const { return renderPassCreateInfo; }
+        inline const VkAttachmentDescription& getAttachmentDescription() const { return attachmentDescription; }
+        inline const VkAttachmentReference& getAttachmentReference() const { return attachmentReference; }
+        inline const VkSubpassDescription& getSubpassDescription() const { return subpassDescription; }
+        inline const VkSubpassDependency& getSubpassDependency() const { return subpassDependency; }
         inline LogicalDevice* getDevice() { return device; }
         inline SwapChain* getSwapChain() { return swapChain; }
 };

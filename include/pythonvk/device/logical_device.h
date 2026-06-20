@@ -39,11 +39,11 @@ class LogicalDevice {
 
         inline VkDevice getHandle() { return device; }
         inline PhysicalDevice* getPhysicalDevice() { return physicalDevice; }
-        inline std::vector<uint32_t> getQueueFamilyIndices() { return queueFamilyIndices; }
-        inline VkDeviceCreateInfo getCreateInfo() { return createInfo; }
-        inline VkPhysicalDeviceFeatures getDeviceFeatures() { return deviceFeatures; }
-        inline std::vector<const char*> getEnabledExtensions() { return enabledExtensions; }
-        inline std::vector<VkDeviceQueueCreateInfo> getQueueCreateInfos() { return queueCreateInfos; }
+        inline const std::vector<uint32_t>& getQueueFamilyIndices() const { return queueFamilyIndices; }
+        inline const VkDeviceCreateInfo& getCreateInfo() const { return createInfo; }
+        inline const VkPhysicalDeviceFeatures& getDeviceFeatures() const { return deviceFeatures; }
+        inline const std::vector<const char*>& getEnabledExtensions() const { return enabledExtensions; }
+        inline const std::vector<VkDeviceQueueCreateInfo>& getQueueCreateInfos() const { return queueCreateInfos; }
 
         void waitIdle();
 

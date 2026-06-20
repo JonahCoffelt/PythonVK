@@ -48,20 +48,22 @@ class GraphicsPipeline {
     public:
         GraphicsPipeline(LogicalDevice* device, RenderPass* renderPass, std::string vertShaderPath, std::string fragShaderPath);
         ~GraphicsPipeline();
+        GraphicsPipeline(const GraphicsPipeline&) = delete;
+        GraphicsPipeline& operator=(const GraphicsPipeline&) = delete;
 
         inline VkPipeline getHandle() { return pipeline; }
         inline VkPipelineLayout getLayout() { return pipelineLayout; }
-        inline std::vector<VkPipelineShaderStageCreateInfo> getShaderStages() { return shaderStages; }
-        inline std::vector<VkDynamicState> getDynamicStates() { return dynamicStates; }
-        inline VkPipelineVertexInputStateCreateInfo getVertexInput() { return vertexInput; }
-        inline VkPipelineInputAssemblyStateCreateInfo getInputAssembly() { return inputAssembly; }
-        inline VkPipelineViewportStateCreateInfo getViewportState() { return viewportState; }
-        inline VkPipelineRasterizationStateCreateInfo getRasterizer() { return rasterizer; }
-        inline VkPipelineMultisampleStateCreateInfo getMultisampling() { return multisampling; }
-        inline VkPipelineColorBlendAttachmentState getColorBlendAttachment() { return colorBlendAttachment; }
-        inline VkPipelineColorBlendStateCreateInfo getColorBlendingState() { return colorBlendingState; }
-        inline VkPipelineDynamicStateCreateInfo getDynamicState() { return dynamicState; }
-        inline VkGraphicsPipelineCreateInfo getPipelineInfo() { return pipelineInfo; }
+        inline const std::vector<VkPipelineShaderStageCreateInfo>& getShaderStages() const { return shaderStages; }
+        inline const std::vector<VkDynamicState>& getDynamicStates() const { return dynamicStates; }
+        inline const VkPipelineVertexInputStateCreateInfo& getVertexInput() const { return vertexInput; }
+        inline const VkPipelineInputAssemblyStateCreateInfo& getInputAssembly() const { return inputAssembly; }
+        inline const VkPipelineViewportStateCreateInfo& getViewportState() const { return viewportState; }
+        inline const VkPipelineRasterizationStateCreateInfo& getRasterizer() const { return rasterizer; }
+        inline const VkPipelineMultisampleStateCreateInfo& getMultisampling() const { return multisampling; }
+        inline const VkPipelineColorBlendAttachmentState& getColorBlendAttachment() const { return colorBlendAttachment; }
+        inline const VkPipelineColorBlendStateCreateInfo& getColorBlendingState() const { return colorBlendingState; }
+        inline const VkPipelineDynamicStateCreateInfo& getDynamicState() const { return dynamicState; }
+        inline const VkGraphicsPipelineCreateInfo& getPipelineInfo() const { return pipelineInfo; }
 };
 
 #endif

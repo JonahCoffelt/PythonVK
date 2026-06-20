@@ -17,6 +17,8 @@ class Window {
     public:
         Window(std::string title, int width, int height);
         ~Window();
+        Window(const Window&) = delete;
+        Window& operator=(const Window&) = delete;
 
         inline GLFWwindow* getHandle() { return window; }
 };

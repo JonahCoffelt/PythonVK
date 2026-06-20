@@ -53,6 +53,10 @@ class PhysicalDevice {
     public:
         PhysicalDevice(VkPhysicalDevice device, Surface* surface);
         ~PhysicalDevice();
+        PhysicalDevice(const PhysicalDevice&) = delete;
+        PhysicalDevice& operator=(const PhysicalDevice&) = delete;
+        PhysicalDevice(PhysicalDevice&&) = default;
+        PhysicalDevice& operator=(PhysicalDevice&&) = default;
         inline VkPhysicalDevice getHandle() { return device; }
 
         // Device Suitability
@@ -63,7 +67,7 @@ class PhysicalDevice {
         std::vector<const char*> getEnabledExtensionsList(std::vector<const char*> requestedExtensions);
 
         // Queue Families
-        inline QueueFamilyIndices getQueueFamilyIndices() { return queueFamilyIndices; }
+        inline const QueueFamilyIndices& getQueueFamilyIndices() const { return queueFamilyIndices; }
         inline bool hasGraphicsFamily() { return queueFamilyIndices.graphicsFamily.has_value(); }
         inline bool hasComputeFamily() { return queueFamilyIndices.computeFamily.has_value(); }
         inline bool hasTransferFamily() { return queueFamilyIndices.transferFamily.has_value(); }
@@ -76,10 +80,10 @@ class PhysicalDevice {
         inline uint32_t getPresentFamilyIndex() { return queueFamilyIndices.presentFamily.value(); }
 
         // Swap Chain
-        inline SwapChainSupportDetails& getSwapChainDetails() { return swapChainDetails; }
-        inline VkSurfaceCapabilitiesKHR getSurfaceCapabilities() { return swapChainDetails.capabilities; }
-        inline std::vector<VkSurfaceFormatKHR>& getSurfaceFormats() { return swapChainDetails.formats; }
-        inline std::vector<VkPresentModeKHR>& getPresentModes() { return swapChainDetails.presentModes; }
+        inline const SwapChainSupportDetails& getSwapChainDetails() const { return swapChainDetails; }
+        inline const VkSurfaceCapabilitiesKHR& getSurfaceCapabilities() const { return swapChainDetails.capabilities; }
+        inline const std::vector<VkSurfaceFormatKHR>& getSurfaceFormats() const { return swapChainDetails.formats; }
+        inline const std::vector<VkPresentModeKHR>& getPresentModes() const { return swapChainDetails.presentModes; }
         inline bool supportsSwapChain() { return !swapChainDetails.formats.empty() && !swapChainDetails.presentModes.empty(); }
 
         // Device properties
@@ -88,10 +92,10 @@ class PhysicalDevice {
         inline uint32_t getVendorID() { return deviceProperties.vendorID; }
         inline uint32_t getDeviceID() { return deviceProperties.deviceID; }
         inline VkPhysicalDeviceType getDeviceType() { return deviceProperties.deviceType; }
-        inline std::string getName() { return std::string(deviceProperties.deviceName); }
-        inline uint8_t* getPipelineCacheUUID() {return deviceProperties.pipelineCacheUUID; }
-        inline VkPhysicalDeviceLimits getLimits() { return deviceProperties.limits; }
-        inline VkPhysicalDeviceSparseProperties getSparseProperties() { return deviceProperties.sparseProperties; }
+        inline const char* getName() const { return deviceProperties.deviceName; }
+        inline const uint8_t* getPipelineCacheUUID() const { return deviceProperties.pipelineCacheUUID; }
+        inline const VkPhysicalDeviceLimits& getLimits() const { return deviceProperties.limits; }
+        inline const VkPhysicalDeviceSparseProperties& getSparseProperties() const { return deviceProperties.sparseProperties; }
 
         // Device Features
         // General
@@ -146,9 +150,9 @@ static inline std::vector<PhysicalDevice> getPhysicalDevices(Instance* instance,
 
     // Loop through to create PhysicalDevice objects
     std::vector<PhysicalDevice> devices;
+    devices.reserve(vkDevices.size());
     for (const auto& vkDevice : vkDevices) {
-        PhysicalDevice device(vkDevice, surface);
-        devices.push_back(device);
+        devices.emplace_back(vkDevice, surface);
     }
 
     return devices;

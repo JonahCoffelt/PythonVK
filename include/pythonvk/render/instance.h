@@ -26,6 +26,8 @@ class Instance {
     public:
         Instance(std::string name = "PythonVK", bool useValidation = true, unsigned int variant = 0, unsigned int major_version = 1, unsigned int minor_version = 0, unsigned int patch = 0);
         ~Instance();
+        Instance(const Instance&) = delete;
+        Instance& operator=(const Instance&) = delete;
 
         inline VkInstance getHandle() { return instance; }
 

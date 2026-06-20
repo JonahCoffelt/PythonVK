@@ -42,6 +42,8 @@ class SwapChain {
     public:
         SwapChain(PhysicalDevice* physicalDevice, LogicalDevice* logicalDevice, Surface* surface);
         ~SwapChain();
+        SwapChain(const SwapChain&) = delete;
+        SwapChain& operator=(const SwapChain&) = delete;
 
         inline VkSwapchainKHR getHandle() { return swapChain; }
         inline PhysicalDevice* getPhysicalDevice() { return physicalDevice; }
@@ -49,15 +51,15 @@ class SwapChain {
         inline Surface* getSurface() { return surface; }
         inline Window* getWindow() { return window; }
 
-        inline VkSurfaceFormatKHR getSurfaceFormat() { return surfaceFormat; }
-        inline VkPresentModeKHR getPresentMode() { return presentMode; }
-        inline VkExtent2D getExtent() { return extent; }
-        inline std::vector<uint32_t> getQueueFamilyIndices() { return queueFamilyIndices; }
-        inline uint32_t getImageCount() { return imageCount; }
-        inline std::vector<VkImage> getImages() { return images; }
-        inline std::vector<VkImageView> getImageViews() { return imageViews; }
-        inline int getWidth() { return width; }
-        inline int getHeight() { return height; }
+        inline const VkSurfaceFormatKHR& getSurfaceFormat() const { return surfaceFormat; }
+        inline const VkPresentModeKHR& getPresentMode() const { return presentMode; }
+        inline const VkExtent2D& getExtent() const { return extent; }
+        inline const std::vector<uint32_t>& getQueueFamilyIndices() const { return queueFamilyIndices; }
+        inline uint32_t getImageCount() const { return imageCount; }
+        inline const std::vector<VkImage>& getImages() const { return images; }
+        inline const std::vector<VkImageView>& getImageViews() const { return imageViews; }
+        inline int getWidth() const { return width; }
+        inline int getHeight() const { return height; }
 };
 
 #endif
