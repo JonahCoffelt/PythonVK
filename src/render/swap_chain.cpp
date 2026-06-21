@@ -1,6 +1,13 @@
 #include <pythonvk/render/swap_chain.h>
 
-SwapChain::SwapChain(PhysicalDevice* physicalDevice, LogicalDevice* logicalDevice, Surface* surface): physicalDevice(physicalDevice), logicalDevice(logicalDevice), surface(surface) {
+SwapChain::SwapChain(
+    PhysicalDevice* physicalDevice, 
+    LogicalDevice* logicalDevice, 
+    Surface* surface, 
+    VkPresentModeKHR presentMode, 
+    VkFormat format, 
+    VkColorSpaceKHR colorSpace
+): physicalDevice(physicalDevice), logicalDevice(logicalDevice), surface(surface) {
     // Use the window from the surface
     window = surface->getWindow();
 

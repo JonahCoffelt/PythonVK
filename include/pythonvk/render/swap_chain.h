@@ -40,7 +40,14 @@ class SwapChain {
         void setImageViews();
 
     public:
-        SwapChain(PhysicalDevice* physicalDevice, LogicalDevice* logicalDevice, Surface* surface);
+        SwapChain(
+            PhysicalDevice* physicalDevice, 
+            LogicalDevice* logicalDevice, 
+            Surface* surface, 
+            VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR, 
+            VkFormat format = VK_FORMAT_B8G8R8A8_UNORM, 
+            VkColorSpaceKHR colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+        );
         ~SwapChain();
         SwapChain(const SwapChain&) = delete;
         SwapChain& operator=(const SwapChain&) = delete;

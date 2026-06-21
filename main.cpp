@@ -54,8 +54,10 @@ private:
         if (enableValidationLayers) { debugger = new Debugger(instance); }
         window = new Window("PythonVK", 800, 600);
         surface = new Surface(instance, window);
+
         pickPhysicalDevice();
         logicalDevice = new LogicalDevice(physicalDevice, REQUIRED_DEVICE_EXTENSIONS, PREFERED_DEVICE_EXTENSIONS);
+        
         swapChain = new SwapChain(physicalDevice, logicalDevice, surface);
         renderPass = new RenderPass(logicalDevice, swapChain);
         graphicsPipeline = new GraphicsPipeline(logicalDevice, renderPass, "shaders/shader.vert.spv", "shaders/shader.frag.spv");
