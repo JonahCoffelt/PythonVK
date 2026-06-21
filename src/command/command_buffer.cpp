@@ -89,6 +89,38 @@ void CommandBuffer::reset() {
     }
 }
 
+void CommandBuffer::submit(VkQueue queue, std::vector<Semaphore*> waitSemaphores, std::vector<Semaphore*> signalSemaphores, Fence* fence, VkPipelineStageFlags waitStage) {
+    std::vector<VkSemaphore> waitHandles;
+    waitHandles.reserve(waitSemaphores.size());
+    for (Semaphore* semaphore : waitSemaphores) {
+        waitHandles.push_back(semaphore->getHandle());
+    }
+
+    std::vector<VkSemaphore> signalHandles;
+    signalHandles.reserve(signalSemaphores.size());
+    for (Semaphore* semaphore : signalSemaphores) {
+        signalHandles.push_back(semaphore->getHandle());
+    }
+
+    std::vector<VkPipelineStageFlags> waitStages(waitHandles.size(), waitStage);
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.waitSemaphoreCount = static_cast<uint32_t>(waitHandles.size());
+    submitInfo.pWaitSemaphores = waitHandles.empty() ? nullptr : waitHandles.data();
+    submitInfo.pWaitDstStageMask = waitStages.empty() ? nullptr : waitStages.data();
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+    submitInfo.signalSemaphoreCount = static_cast<uint32_t>(signalHandles.size());
+    submitInfo.pSignalSemaphores = signalHandles.empty() ? nullptr : signalHandles.data();
+
+    VkFence fenceHandle = fence ? fence->getHandle() : VK_NULL_HANDLE;
+    VkResult result = vkQueueSubmit(queue, 1, &submitInfo, fenceHandle);
+    if (result != VK_SUCCESS) {
+        throw std::runtime_error("failed to submit command buffer!");
+    }
+}
+
 CommandBuffer::~CommandBuffer() {
     vkFreeCommandBuffers(device->getHandle(), pool->getHandle(), 1, &commandBuffer);
 }

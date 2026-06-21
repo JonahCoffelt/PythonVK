@@ -6,6 +6,10 @@
 #include <katra/device/physical_device.h>
 
 
+// Forward Declarations
+class Semaphore;
+
+
 // Class Declaration
 class LogicalDevice {
     private:
@@ -46,6 +50,7 @@ class LogicalDevice {
         inline const std::vector<VkDeviceQueueCreateInfo>& getQueueCreateInfos() const { return queueCreateInfos; }
 
         void waitIdle();
+        void present(VkSwapchainKHR swapChain, uint32_t imageIndex, std::vector<Semaphore*> waitSemaphores = {});
 
         inline bool hasGraphicsQueue() { return graphicsQueue.has_value(); }
         inline bool hasPresentQueue() { return presentQueue.has_value(); }

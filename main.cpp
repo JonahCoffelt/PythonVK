@@ -8,13 +8,10 @@ const std::vector<const char*> PREFERED_DEVICE_EXTENSIONS = {
 };
 
 bool isDeviceSuitable(PhysicalDevice& device) {
-    if (!device.checkExtensionSupport(REQUIRED_DEVICE_EXTENSIONS)) {
-        return false;
-    }
-    if (!device.supportsSwapChain()) {
-        return false;
-    }
-    return device.hasGraphicsFamily() && device.hasPresentFamily();
+    return  device.checkExtensionSupport(REQUIRED_DEVICE_EXTENSIONS) &&
+            device.supportsSwapChain() &&
+            device.hasGraphicsFamily() && 
+            device.hasPresentFamily();
 }
 
 class HelloTriangleApplication {
@@ -60,7 +57,6 @@ private:
         createFramebuffers();
 
         commandPool = new CommandPool(logicalDevice, logicalDevice->getGraphicsFamilyIndex());
-        
         createCommandBuffers();
         createSyncObjects();
     }
@@ -94,16 +90,14 @@ private:
         // Loop through images and create a framebuffer
         for (size_t i = 0; i < swapChain->getImageCount(); i++) {
             std::vector<VkImageView> attachments = { swapChain->getImageViews()[i] };
-            Framebuffer* framebuffer = new Framebuffer(logicalDevice, renderPass, attachments, 1);
-            swapChainFramebuffers.push_back(framebuffer);
+            swapChainFramebuffers.push_back(new Framebuffer(logicalDevice, renderPass, attachments, 1));
         }
     }
 
     void createCommandBuffers() {
         // Make buffers for each in flight frame
-        commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            commandBuffers[i] = new CommandBuffer(commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+            commandBuffers.push_back(new CommandBuffer(commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY));
         }
     }
 
@@ -128,67 +122,41 @@ private:
         logicalDevice->waitIdle();
     }
 
-    void recordCommandBuffer(CommandBuffer* commandBuffer, uint32_t imageIndex) {
+    void drawFrame() {
+        // Get the in flight fence, command buffer, and image available semaphore for the current frame
+        Fence* inFlightFence = inFlightFences[currentFrame];
+        
+        // Make sure no other frame is rendering
+        inFlightFence->wait();
+        inFlightFence->reset();
+        
+        // Aquire Image from swap chain
+        Semaphore* imageAvailableSemaphore = imageAvailableSemaphores[currentFrame];
+        uint32_t imageIndex = swapChain->acquireImage(imageAvailableSemaphore);
+
+        // Get the render finished semaphore and framebuffer for the current image
+        Semaphore* renderFinishedSemaphore = renderFinishedSemaphores[imageIndex];
+        Framebuffer* framebuffer = swapChainFramebuffers[imageIndex];
+        
+        // Record the command buffer
+        CommandBuffer* commandBuffer = commandBuffers[currentFrame];
+        commandBuffer->reset();
         commandBuffer->begin();
-        commandBuffer->beginRenderPass(renderPass, swapChainFramebuffers[imageIndex], {0.0f, 0.0f, 0.0f, 1.0f});
+        commandBuffer->beginRenderPass(renderPass, framebuffer, {0.0f, 0.0f, 0.0f, 1.0f});
         commandBuffer->bindPipeline(graphicsPipeline);
         commandBuffer->setViewport(0.0f, 0.0f, static_cast<float>(swapChain->getExtent().width), static_cast<float>(swapChain->getExtent().height));
         commandBuffer->setScissor(0, 0, swapChain->getExtent().width, swapChain->getExtent().height);
         commandBuffer->draw(3, 1, 0, 0);
         commandBuffer->endRenderPass();
         commandBuffer->end();
-    }
-
-    void drawFrame() {
-        // Make sure no other frame is rendering
-        inFlightFences[currentFrame]->wait();
-        // Reset fence
-        inFlightFences[currentFrame]->reset();
-
-        // Aquire Image from swap chain
-        uint32_t imageIndex;
-        vkAcquireNextImageKHR(logicalDevice->getHandle(), swapChain->getHandle(), UINT64_MAX, imageAvailableSemaphores[currentFrame]->getHandle(), VK_NULL_HANDLE, &imageIndex);
-
-        // Record the command buffer
-        commandBuffers[currentFrame]->reset();
-        recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
         // Submit the command buffer
-        VkSubmitInfo submitInfo{};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        // Semaphores to wait on (wait for image to be available)
-        VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]->getHandle()};
-        submitInfo.pWaitSemaphores = waitSemaphores;
-        submitInfo.waitSemaphoreCount = 1;
-        // Use color attachment
-        VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-        submitInfo.pWaitDstStageMask = waitStages;
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffers[currentFrame]->getHandle();
-        // Signal the render finished semaphore when complete
-        VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[imageIndex]->getHandle()};
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = signalSemaphores;
+        commandBuffer->submit(logicalDevice->getGraphicsQueue(), {imageAvailableSemaphore}, {renderFinishedSemaphore}, inFlightFence);
 
-        // Use inFlightFence so the next frame will wait on this command queue
-        VkResult result = vkQueueSubmit(logicalDevice->getGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]->getHandle());
-        if (result != VK_SUCCESS) {
-            throw std::runtime_error("failed to submit draw command buffer!");
-        }
+        // Present the image to the screen
+        logicalDevice->present(swapChain->getHandle(), imageIndex, {renderFinishedSemaphore});
 
-        // Presentation
-        VkPresentInfoKHR presentInfo{};
-        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = signalSemaphores;
-        VkSwapchainKHR swapChains[] = {swapChain->getHandle()};
-        presentInfo.swapchainCount = 1;
-        presentInfo.pSwapchains = swapChains;
-        presentInfo.pImageIndices = &imageIndex;
-        presentInfo.pResults = nullptr; // Optional
-
-        vkQueuePresentKHR(logicalDevice->getPresentQueue(), &presentInfo);
-
+        // Increment the current frame
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
@@ -197,7 +165,6 @@ private:
         if (enableValidationLayers) {
             delete debugger;
         }
-
         // Destroy synchronization objects
         for (size_t i = 0; i < swapChain->getImageCount(); i++) {
             delete renderFinishedSemaphores[i];
@@ -206,12 +173,11 @@ private:
             delete inFlightFences[i];
             delete imageAvailableSemaphores[i];
         }
-        
         // Destroy all framebuffer (must happen before image pipeline destroy)
         for (auto framebuffer : swapChainFramebuffers) {
             delete framebuffer;
         }
-        
+        // Destroy all command buffers
         for (auto commandBuffer : commandBuffers) {
             delete commandBuffer;
         }

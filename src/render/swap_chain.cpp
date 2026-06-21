@@ -175,6 +175,15 @@ void SwapChain::setImageViews() {
     }
 }
 
+uint32_t SwapChain::acquireImage(Semaphore* semaphore, uint64_t timeout) {
+    uint32_t imageIndex;
+    VkResult result = vkAcquireNextImageKHR(logicalDevice->getHandle(), swapChain, timeout, semaphore->getHandle(), VK_NULL_HANDLE, &imageIndex);
+    if (result != VK_SUCCESS) {
+        throw std::runtime_error("failed to acquire image!");
+    }
+    return imageIndex;
+}
+
 SwapChain::~SwapChain() {
     if (logicalDevice == nullptr || logicalDevice->getHandle() == VK_NULL_HANDLE) {
         return;

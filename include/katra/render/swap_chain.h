@@ -7,6 +7,7 @@
 #include <katra/render/surface.h>
 #include <katra/device/physical_device.h>
 #include <katra/device/logical_device.h>
+#include <katra/synchronization/semaphore.h>
 
 // Class Declaration
 class SwapChain {
@@ -57,6 +58,8 @@ class SwapChain {
         inline LogicalDevice* getLogicalDevice() { return logicalDevice; }
         inline Surface* getSurface() { return surface; }
         inline Window* getWindow() { return window; }
+
+        uint32_t acquireImage(Semaphore* semaphore = nullptr, uint64_t timeout = UINT64_MAX);
 
         inline const VkSurfaceFormatKHR& getSurfaceFormat() const { return surfaceFormat; }
         inline const VkPresentModeKHR& getPresentMode() const { return presentMode; }

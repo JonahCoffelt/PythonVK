@@ -1,4 +1,5 @@
 #include <katra/device/logical_device.h>
+#include <katra/synchronization/semaphore.h>
 
 /**
  * @brief Construct a new LogicalDevice object
@@ -24,6 +25,29 @@ LogicalDevice::LogicalDevice(PhysicalDevice* physicalDevice, std::vector<const c
 void LogicalDevice::waitIdle() {
     if (device == VK_NULL_HANDLE) { return; }
     vkDeviceWaitIdle(device);
+}
+
+void LogicalDevice::present(VkSwapchainKHR swapChain, uint32_t imageIndex, std::vector<Semaphore*> waitSemaphores) {
+    std::vector<VkSemaphore> waitHandles;
+    waitHandles.reserve(waitSemaphores.size());
+    for (Semaphore* semaphore : waitSemaphores) {
+        waitHandles.push_back(semaphore->getHandle());
+    }
+
+    VkSwapchainKHR swapChains[] = {swapChain};
+
+    VkPresentInfoKHR presentInfo{};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount = static_cast<uint32_t>(waitHandles.size());
+    presentInfo.pWaitSemaphores = waitHandles.empty() ? nullptr : waitHandles.data();
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = swapChains;
+    presentInfo.pImageIndices = &imageIndex;
+
+    VkResult result = vkQueuePresentKHR(getPresentQueue(), &presentInfo);
+    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+        throw std::runtime_error("failed to present swap chain image!");
+    }
 }
 
 void LogicalDevice::setDeviceCreateInfo() {
