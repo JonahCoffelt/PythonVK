@@ -8,15 +8,13 @@
 Instance::Instance(
     std::string name, 
     bool useValidation, 
-    unsigned int variant, 
-    unsigned int major_version, 
-    unsigned int minor_version, 
-    unsigned int patch): 
-        useValidation(useValidation) 
+    uint32_t apiVersion): 
+        useValidation(useValidation),
+        apiVersion(apiVersion)
     {
 
     // Set app info and extensions
-    setAppInfo(name, variant, major_version, minor_version, patch);
+    setAppInfo(name, apiVersion);
     setRequiredExtensions();
     setInstanceCreateInfo();
 
@@ -66,17 +64,16 @@ void Instance::setInstanceCreateInfo() {
  * @param minor_version 
  * @param patch 
  */
-void Instance::setAppInfo(std::string name, unsigned int variant, unsigned int major_version, unsigned int minor_version, unsigned int patch) {
+void Instance::setAppInfo(std::string name, uint32_t apiVersion) {
     applicationName = std::move(name);
     appInfo = {};
 
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = applicationName.c_str();
     appInfo.pEngineName = "PythonVK";
-    uint32_t version = VK_MAKE_API_VERSION(variant, major_version, minor_version, patch);
-    appInfo.applicationVersion = version;
-    appInfo.engineVersion = version;
-    appInfo.apiVersion = version;
+    appInfo.applicationVersion = 0;
+    appInfo.engineVersion = 0;
+    appInfo.apiVersion = apiVersion;
 }
 
 /**

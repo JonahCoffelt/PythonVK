@@ -18,19 +18,18 @@ class Instance {
         std::vector<const char*> extensions;
         VkInstanceCreateInfo createInfo{};
         VkDebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo{};
-
-        void setAppInfo(std::string name = "PythonVK", unsigned int variant = 0, unsigned int major_version = 1, unsigned int minor_version = 0, unsigned int patch = 0);
+        uint32_t apiVersion;
+        
+        void setAppInfo(std::string name = "PythonVK", uint32_t apiVersion = VK_API_VERSION_1_0);
         void setRequiredExtensions();
         void setInstanceCreateInfo();
         
     public:
-        Instance(std::string name = "PythonVK", bool useValidation = true, unsigned int variant = 0, unsigned int major_version = 1, unsigned int minor_version = 0, unsigned int patch = 0);
+        Instance(std::string name = "PythonVK", bool useValidation = true, uint32_t apiVersion = VK_API_VERSION_1_0);
         ~Instance();
-        Instance(const Instance&) = delete;
-        Instance& operator=(const Instance&) = delete;
 
         inline VkInstance getHandle() { return instance; }
-
+        inline uint32_t getApiVersion() const { return apiVersion; }
 };
 
 #endif
