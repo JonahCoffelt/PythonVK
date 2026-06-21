@@ -57,16 +57,16 @@ class LogicalDevice {
         inline bool hasComputeQueue() { return computeQueue.has_value(); }
         inline bool hasTransferQueue() { return transferQueue.has_value(); }
         inline bool hasSparseBindingQueue() { return sparseBindingQueue.has_value(); }
-        inline uint32_t getGraphicsFamilyIndex() { return physicalDevice->getGraphicsFamilyIndex(); }
-        inline uint32_t getPresentFamilyIndex() { return physicalDevice->getPresentFamilyIndex(); }
-        inline uint32_t getComputeFamilyIndex() { return physicalDevice->getComputeFamilyIndex(); }
-        inline uint32_t getTransferFamilyIndex() { return physicalDevice->getTransferFamilyIndex(); }
-        inline uint32_t getSparseBindingFamilyIndex() { return physicalDevice->getSparseBindingFamilyIndex(); }
-        inline VkQueue getGraphicsQueue() { return graphicsQueue.value(); }
-        inline VkQueue getPresentQueue() { return presentQueue.value(); }
-        inline VkQueue getComputeQueue() { return computeQueue.value(); }
-        inline VkQueue getTransferQueue() { return transferQueue.value(); }
-        inline VkQueue getSparseBindingQueue() { return sparseBindingQueue.value(); }
+        inline uint32_t getGraphicsFamilyIndex() { return hasGraphicsQueue() ? physicalDevice->getGraphicsFamilyIndex() : 0; }
+        inline uint32_t getPresentFamilyIndex() { return hasPresentQueue() ? physicalDevice->getPresentFamilyIndex() : 0; }
+        inline uint32_t getComputeFamilyIndex() { return hasComputeQueue() ? physicalDevice->getComputeFamilyIndex() : 0; }
+        inline uint32_t getTransferFamilyIndex() { return hasTransferQueue() ? physicalDevice->getTransferFamilyIndex() : 0; }
+        inline uint32_t getSparseBindingFamilyIndex() { return hasSparseBindingQueue() ? physicalDevice->getSparseBindingFamilyIndex() : 0; }
+        inline VkQueue getGraphicsQueue() { return hasGraphicsQueue() ? graphicsQueue.value() : nullptr; }
+        inline VkQueue getPresentQueue() { return hasPresentQueue() ? presentQueue.value() : nullptr; }
+        inline VkQueue getComputeQueue() { return hasComputeQueue() ? computeQueue.value() : nullptr; }
+        inline VkQueue getTransferQueue() { return hasTransferQueue() ? transferQueue.value() : nullptr; }
+        inline VkQueue getSparseBindingQueue() { return hasSparseBindingQueue() ? sparseBindingQueue.value() : nullptr; }
 };
 
 #endif

@@ -12,8 +12,8 @@ SwapChain::SwapChain(
     window = surface->getWindow();
 
     // Set swap chain properties
-    setSwapSurfaceFormat(VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
-    setSwapPresentMode(VK_PRESENT_MODE_MAILBOX_KHR);
+    setSwapSurfaceFormat(format, colorSpace);
+    setSwapPresentMode(presentMode);
     setSwapExtent();
     setImageCount();
     setCreateInfo();
@@ -177,7 +177,7 @@ void SwapChain::setImageViews() {
 
 uint32_t SwapChain::acquireImage(Semaphore* semaphore, uint64_t timeout) {
     uint32_t imageIndex;
-    VkResult result = vkAcquireNextImageKHR(logicalDevice->getHandle(), swapChain, timeout, semaphore->getHandle(), VK_NULL_HANDLE, &imageIndex);
+    VkResult result = vkAcquireNextImageKHR(logicalDevice->getHandle(), swapChain, timeout, semaphore ? semaphore->getHandle() : VK_NULL_HANDLE, VK_NULL_HANDLE, &imageIndex);
     if (result != VK_SUCCESS) {
         throw std::runtime_error("failed to acquire image!");
     }

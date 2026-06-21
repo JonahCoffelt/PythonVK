@@ -43,7 +43,7 @@ private:
     uint32_t currentFrame = 0;
 
     void initVulkan() {
-        instance = new Instance();
+        instance = new Instance("Katra", enableValidationLayers);
         if (enableValidationLayers) { debugger = new Debugger(instance); }
         window = new Window("Katra", 800, 600);
         surface = new Surface(instance, window);

@@ -38,6 +38,8 @@ GraphicsPipeline::GraphicsPipeline(LogicalDevice* device, RenderPass* renderPass
     // Clean up shader modules
     delete vertShaderModule;
     delete fragShaderModule;
+    vertShaderModule = nullptr;
+    fragShaderModule = nullptr;
 }
 
 /**
