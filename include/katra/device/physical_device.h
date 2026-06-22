@@ -59,6 +59,9 @@ class PhysicalDevice {
         PhysicalDevice& operator=(PhysicalDevice&&) = default;
         inline VkPhysicalDevice getHandle() { return device; }
 
+        // Memory
+        uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
         // Device Suitability
         inline unsigned int getScore() { return score; }
 

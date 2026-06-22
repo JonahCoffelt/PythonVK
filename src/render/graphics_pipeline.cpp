@@ -4,7 +4,7 @@
  * @brief Construct a new Graphics Pipeline object
  * 
  */
-GraphicsPipeline::GraphicsPipeline(RenderPass* renderPass, std::string vertShaderPath, std::string fragShaderPath): device(renderPass->getDevice()), renderPass(renderPass) {
+GraphicsPipeline::GraphicsPipeline(RenderPass* renderPass, std::string vertShaderPath, std::string fragShaderPath, VertexInput* vertexInput): device(renderPass->getDevice()), renderPass(renderPass), vertexInput(vertexInput) {
     
     // Create shader modules
     vertShaderModule = new ShaderModule(device, vertShaderPath);
@@ -12,7 +12,6 @@ GraphicsPipeline::GraphicsPipeline(RenderPass* renderPass, std::string vertShade
     
     // Set pipeline state
     setShaderStages();
-    setVertexInput();
     setInputAssembly();
     setDynamicState();
     setViewportState();
@@ -65,18 +64,6 @@ void GraphicsPipeline::setShaderStages() {
     shaderStages.clear();
     shaderStages.push_back(vertShaderStageInfo);
     shaderStages.push_back(fragShaderStageInfo);
-}
-
-/**
- * @brief Set the vertex input
- */
-void GraphicsPipeline::setVertexInput() {
-    vertexInput = {};
-    vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInput.vertexBindingDescriptionCount = 0;
-    vertexInput.pVertexBindingDescriptions = nullptr;
-    vertexInput.vertexAttributeDescriptionCount = 0;
-    vertexInput.pVertexAttributeDescriptions = nullptr;
 }
 
 /**
@@ -197,7 +184,7 @@ void GraphicsPipeline::setPipelineInfo() {
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
     pipelineInfo.pStages = shaderStages.data();
-    pipelineInfo.pVertexInputState = &vertexInput;
+    pipelineInfo.pVertexInputState = &vertexInput->getCreateInfo();
     pipelineInfo.pInputAssemblyState = &inputAssembly;
     pipelineInfo.pViewportState = &viewportState;
     pipelineInfo.pRasterizationState = &rasterizer;

@@ -139,6 +139,23 @@ void PhysicalDevice::setScore() {
 }
 
 /**
+ * @brief Query info about the available types of memory
+ * 
+ * @param typeFilter 
+ * @param properties 
+ * @return uint32_t 
+ */
+uint32_t PhysicalDevice::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
+        if ((typeFilter & (1 << i)) && (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    throw std::runtime_error("failed to find suitable memory type!");
+}
+
+/**
  * @brief Final all the queue family indices on the device and save them to queueFamilyIndices
  * 
  */
@@ -162,7 +179,7 @@ void PhysicalDevice::findQueueFamilyIndices() {
         }
 
         // Check transfer family
-        if (queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT) {
+        if (queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT && !(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
             queueFamilyIndices.transferFamily = i;
         }
 

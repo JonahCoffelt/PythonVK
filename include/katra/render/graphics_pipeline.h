@@ -6,6 +6,7 @@
 #include <katra/device/logical_device.h>
 #include <katra/render/render_pass.h>
 #include <katra/render/shader_module.h>
+#include <katra/render/vertex_input.h>
 
 
 // Class Declaration
@@ -21,7 +22,7 @@ class GraphicsPipeline {
         ShaderModule* fragShaderModule;
 
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-        VkPipelineVertexInputStateCreateInfo vertexInput;
+        VertexInput* vertexInput;
         VkPipelineInputAssemblyStateCreateInfo inputAssembly;
         std::vector<VkDynamicState> dynamicStates;
         VkPipelineDynamicStateCreateInfo dynamicState;
@@ -34,7 +35,6 @@ class GraphicsPipeline {
         VkGraphicsPipelineCreateInfo pipelineInfo;
 
         void setShaderStages();
-        void setVertexInput();
         void setInputAssembly();
         void setDynamicState();
         void setViewportState();
@@ -46,7 +46,7 @@ class GraphicsPipeline {
         void setPipelineInfo();
 
     public:
-        GraphicsPipeline(RenderPass* renderPass, std::string vertShaderPath, std::string fragShaderPath);
+        GraphicsPipeline(RenderPass* renderPass, std::string vertShaderPath, std::string fragShaderPath, VertexInput* vertexInput);
         ~GraphicsPipeline();
         GraphicsPipeline(const GraphicsPipeline&) = delete;
         GraphicsPipeline& operator=(const GraphicsPipeline&) = delete;
@@ -55,7 +55,7 @@ class GraphicsPipeline {
         inline VkPipelineLayout getLayout() { return pipelineLayout; }
         inline const std::vector<VkPipelineShaderStageCreateInfo>& getShaderStages() const { return shaderStages; }
         inline const std::vector<VkDynamicState>& getDynamicStates() const { return dynamicStates; }
-        inline const VkPipelineVertexInputStateCreateInfo& getVertexInput() const { return vertexInput; }
+        inline VertexInput* getVertexInput() { return vertexInput; }
         inline const VkPipelineInputAssemblyStateCreateInfo& getInputAssembly() const { return inputAssembly; }
         inline const VkPipelineViewportStateCreateInfo& getViewportState() const { return viewportState; }
         inline const VkPipelineRasterizationStateCreateInfo& getRasterizer() const { return rasterizer; }

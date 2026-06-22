@@ -1,5 +1,6 @@
 #include <vulkan/vulkan.h>
 
+// STLIB
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
@@ -12,5 +13,9 @@
 #include <algorithm>
 #include <fstream>
 
+// GLFW
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
+// GLM
+#include <glm/glm.hpp>

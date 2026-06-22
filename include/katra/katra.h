@@ -20,6 +20,7 @@
 #include <katra/render/graphics_pipeline.h>
 #include <katra/render/shader_module.h>
 #include <katra/render/framebuffer.h>
+#include <katra/render/vertex_input.h>
 
 // Device
 #include <katra/device/physical_device.h>
@@ -32,5 +33,8 @@
 // Synchronization
 #include <katra/synchronization/fence.h>
 #include <katra/synchronization/semaphore.h>
+
+// Buffer
+#include <katra/buffer/buffer.h>
 
 #endif

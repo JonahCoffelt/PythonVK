@@ -82,6 +82,12 @@ void CommandBuffer::draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t 
     vkCmdDraw(commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
 }
 
+void CommandBuffer::bindVertexBuffer(Buffer* buffer, uint32_t binding, uint32_t offset) {
+    VkBuffer buffers[] = {buffer->getHandle()};
+    VkDeviceSize offsets[] = {offset};
+    vkCmdBindVertexBuffers(commandBuffer, binding, 1, buffers, offsets);
+}
+
 void CommandBuffer::reset() {
     VkResult result = vkResetCommandBuffer(commandBuffer, 0);
     if (result != VK_SUCCESS) {

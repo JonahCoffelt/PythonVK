@@ -1,10 +1,21 @@
 #include <katra/katra.h>
 
+struct Vertex {
+    glm::vec2 pos;
+    glm::vec3 color;
+};
+
 const std::vector<const char*> REQUIRED_DEVICE_EXTENSIONS = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 const std::vector<const char*> PREFERED_DEVICE_EXTENSIONS = {
     "VK_KHR_portability_subset"
+};
+
+const std::vector<Vertex> vertices = {
+    {{0.0f, -0.5f}, {1.0f, 1.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
 };
 
 bool isDeviceSuitable(PhysicalDevice& device) {
@@ -42,23 +53,33 @@ private:
     std::vector<Fence*> inFlightFences;
     uint32_t currentFrame = 0;
 
+    VertexInput* vertexInput;
+    Buffer* vertexBuffer;
+
     void initVulkan() {
-        instance = new Instance("Katra", enableValidationLayers);
+        instance = new Instance("Katra", enableValidationLayers, VK_API_VERSION_1_2);
         if (enableValidationLayers) { debugger = new Debugger(instance); }
         window = new Window("Katra", 800, 600);
         surface = new Surface(instance, window);
 
         pickPhysicalDevice();
         logicalDevice = new LogicalDevice(physicalDevice, REQUIRED_DEVICE_EXTENSIONS, PREFERED_DEVICE_EXTENSIONS);
-        
+                
         swapChain = new SwapChain(logicalDevice, surface);
         renderPass = new RenderPass(swapChain);
-        graphicsPipeline = new GraphicsPipeline(renderPass, "shaders/shader.vert.spv", "shaders/shader.frag.spv");
+        vertexInput = new VertexInput(logicalDevice, 0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX, {
+            {0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, pos)},
+            {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)}
+        });
+        graphicsPipeline = new GraphicsPipeline(renderPass, "shaders/shader.vert.spv", "shaders/shader.frag.spv", vertexInput);
         createFramebuffers();
 
         commandPool = new CommandPool(logicalDevice, logicalDevice->getGraphicsFamilyIndex());
         createCommandBuffers();
         createSyncObjects();
+
+        vertexBuffer = new Buffer(logicalDevice, sizeof(vertices[0]) * vertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+        vertexBuffer->write(vertices.data(), sizeof(vertices[0]) * vertices.size());
     }
 
     void pickPhysicalDevice() {
@@ -146,6 +167,7 @@ private:
         commandBuffer->bindPipeline(graphicsPipeline);
         commandBuffer->setViewport(0.0f, 0.0f, static_cast<float>(swapChain->getExtent().width), static_cast<float>(swapChain->getExtent().height));
         commandBuffer->setScissor(0, 0, swapChain->getExtent().width, swapChain->getExtent().height);
+        commandBuffer->bindVertexBuffer(vertexBuffer, 0, 0);
         commandBuffer->draw(3, 1, 0, 0);
         commandBuffer->endRenderPass();
         commandBuffer->end();
@@ -181,7 +203,11 @@ private:
         for (auto commandBuffer : commandBuffers) {
             delete commandBuffer;
         }
-        
+
+        // vkDestroyBuffer(logicalDevice->getHandle(), vertexBuffer, nullptr);
+        // vkFreeMemory(logicalDevice->getHandle(), vertexBufferMemory, nullptr);
+        delete vertexBuffer;
+        delete vertexInput;
         delete commandPool;
         delete graphicsPipeline;
         delete renderPass;

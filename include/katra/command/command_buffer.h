@@ -8,6 +8,7 @@
 #include <katra/render/graphics_pipeline.h>
 #include <katra/synchronization/semaphore.h>
 #include <katra/synchronization/fence.h>
+#include <katra/buffer/buffer.h>
 
 class CommandBuffer {
     private:
@@ -39,6 +40,7 @@ class CommandBuffer {
         void setViewport(float x, float y, float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f);
         void setScissor(int32_t x, int32_t y, uint32_t width, uint32_t height);
         void draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0, uint32_t firstInstance = 0);
+        void bindVertexBuffer(Buffer* buffer, uint32_t binding, uint32_t offset = 0);
 
         void submit(VkQueue queue, std::vector<Semaphore*> waitSemaphores = {}, std::vector<Semaphore*> signalSemaphores = {}, Fence* fence = nullptr, VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 };
