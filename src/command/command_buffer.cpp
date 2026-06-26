@@ -88,6 +88,14 @@ void CommandBuffer::bindVertexBuffer(Buffer* buffer, uint32_t binding, uint32_t 
     vkCmdBindVertexBuffers(commandBuffer, binding, 1, buffers, offsets);
 }
 
+void CommandBuffer::copyBuffer(Buffer* src, Buffer* dst, uint32_t size, uint32_t srcOffset, uint32_t dstOffset) {
+    VkBufferCopy copyRegion{};
+    copyRegion.srcOffset = srcOffset;
+    copyRegion.dstOffset = dstOffset;
+    copyRegion.size = size;
+    vkCmdCopyBuffer(commandBuffer, src->getHandle(), dst->getHandle(), 1, &copyRegion);
+}
+
 void CommandBuffer::reset() {
     VkResult result = vkResetCommandBuffer(commandBuffer, 0);
     if (result != VK_SUCCESS) {

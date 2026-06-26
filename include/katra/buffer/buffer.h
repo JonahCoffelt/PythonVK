@@ -14,6 +14,7 @@ class Buffer {
 
         uint32_t size;
         VkBufferUsageFlags usage;
+        VkMemoryPropertyFlags memoryType;
         VkSharingMode sharingMode;
         VkFlags flags;
 
@@ -25,7 +26,14 @@ class Buffer {
         void setMemoryInfo();
 
     public:
-        Buffer(LogicalDevice* device, uint32_t size, VkBufferUsageFlags usage, VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE, VkFlags flags = 0);
+        Buffer(
+            LogicalDevice* device, 
+            uint32_t size, 
+            VkBufferUsageFlags usage, 
+            VkMemoryPropertyFlags memoryType = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE, 
+            VkFlags flags = 0
+        );
         ~Buffer();
         Buffer(const Buffer&) = delete;
         Buffer& operator=(const Buffer&) = delete;

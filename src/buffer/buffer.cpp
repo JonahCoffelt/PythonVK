@@ -4,9 +4,10 @@ Buffer::Buffer(
     LogicalDevice* device, 
     uint32_t size, 
     VkBufferUsageFlags usage, 
+    VkMemoryPropertyFlags memoryType,
     VkSharingMode sharingMode, 
     VkFlags flags
-): device(device), size(size), usage(usage), sharingMode(sharingMode), flags(flags) {
+): device(device), size(size), usage(usage), memoryType(memoryType), sharingMode(sharingMode), flags(flags) {
     setCreateInfo();
     
     VkResult result = vkCreateBuffer(device->getHandle(), &createInfo, nullptr, &buffer);

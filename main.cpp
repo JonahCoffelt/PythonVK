@@ -55,6 +55,7 @@ private:
 
     VertexInput* vertexInput;
     Buffer* vertexBuffer;
+    Buffer* stagingBuffer;
 
     void initVulkan() {
         instance = new Instance("Katra", enableValidationLayers, VK_API_VERSION_1_2);
@@ -78,8 +79,26 @@ private:
         createCommandBuffers();
         createSyncObjects();
 
-        vertexBuffer = new Buffer(logicalDevice, sizeof(vertices[0]) * vertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-        vertexBuffer->write(vertices.data(), sizeof(vertices[0]) * vertices.size());
+        stagingBuffer = new Buffer(
+            logicalDevice, 
+            sizeof(vertices[0]) * vertices.size(), 
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+        );
+        stagingBuffer->write(vertices.data(), sizeof(vertices[0]) * vertices.size());
+        vertexBuffer = new Buffer(
+            logicalDevice, 
+            sizeof(vertices[0]) * vertices.size(), 
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        );
+
+        // Copy staging buffer to vertex
+        CommandBuffer* copyCommand = new CommandBuffer(commandPool);
+        copyCommand->begin();
+        copyCommand->copyBuffer(stagingBuffer, vertexBuffer, sizeof(vertices[0]) * vertices.size());
+        copyCommand->end();
+        copyCommand->submit(logicalDevice->getGraphicsQueue());
     }
 
     void pickPhysicalDevice() {
@@ -204,9 +223,8 @@ private:
             delete commandBuffer;
         }
 
-        // vkDestroyBuffer(logicalDevice->getHandle(), vertexBuffer, nullptr);
-        // vkFreeMemory(logicalDevice->getHandle(), vertexBufferMemory, nullptr);
         delete vertexBuffer;
+        delete stagingBuffer;
         delete vertexInput;
         delete commandPool;
         delete graphicsPipeline;
