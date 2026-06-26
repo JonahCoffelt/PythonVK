@@ -42,16 +42,16 @@ void Buffer::setMemoryInfo() {
     memoryInfo = {};
     memoryInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     memoryInfo.allocationSize = memoryRequirements.size;
-    memoryInfo.memoryTypeIndex = device->getPhysicalDevice()->findMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    memoryInfo.memoryTypeIndex = device->getPhysicalDevice()->findMemoryType(memoryRequirements.memoryTypeBits, memoryType);
 }
 
 void Buffer::write(const void* data, uint32_t size, uint32_t offset) {
     if (!mapped) {
-        mapMemory();
+        vkMapMemory(device->getHandle(), memory, 0, size, 0, &mappedMemory);
     }
     memcpy((char*)mappedMemory + offset, data, size);
     if (!mapped) {
-        unmapMemory();
+        vkUnmapMemory(device->getHandle(), memory);
     }
 }
 

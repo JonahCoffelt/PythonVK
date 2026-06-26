@@ -132,8 +132,10 @@ private:
         copyCommand->begin();
         copyCommand->copyBuffer(stagingBuffer, vertexBuffer, sizeof(vertices[0]) * vertices.size());
         copyCommand->end();
-        copyCommand->submit(logicalDevice->getGraphicsQueue());
-        logicalDevice->waitIdle();
+        Fence* fence = new Fence(logicalDevice);
+        copyCommand->submit(logicalDevice->getGraphicsQueue(), {}, {}, fence);
+        fence->wait();
+        delete fence;
         delete stagingBuffer;
         delete copyCommand;
 
@@ -159,15 +161,17 @@ private:
         copyCommand->begin();
         copyCommand->copyBuffer(stagingBuffer, indexBuffer, sizeof(indices[0]) * indices.size());
         copyCommand->end();
-        copyCommand->submit(logicalDevice->getGraphicsQueue());
-        logicalDevice->waitIdle();
+        fence = new Fence(logicalDevice);
+        copyCommand->submit(logicalDevice->getGraphicsQueue(), {}, {}, fence);
+        fence->wait();
+        delete fence;
         delete stagingBuffer;
         delete copyCommand;
     }
 
     void createDescriptors() {
         descriptorPool = new DescriptorPool(logicalDevice, swapChain->getImageCount(), {
-            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2}
+            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, swapChain->getImageCount()}
         });
 
         for (size_t i = 0; i < swapChain->getImageCount(); i++) {
