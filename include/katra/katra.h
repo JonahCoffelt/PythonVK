@@ -17,10 +17,12 @@
 #include <katra/render/window.h>
 #include <katra/render/swap_chain.h>
 #include <katra/render/render_pass.h>
-#include <katra/render/graphics_pipeline.h>
 #include <katra/render/shader_module.h>
 #include <katra/render/framebuffer.h>
-#include <katra/render/vertex_input.h>
+
+// Pipeline
+#include <katra/pipeline/graphics_pipeline.h>
+#include <katra/pipeline/vertex_input.h>
 
 // Device
 #include <katra/device/physical_device.h>
@@ -36,5 +38,10 @@
 
 // Buffer
 #include <katra/buffer/buffer.h>
+
+// Descriptor
+#include <katra/descriptor/descriptor_pool.h>
+#include <katra/descriptor/descriptor_set.h>
+#include <katra/descriptor/descriptor_layout.h>
 
 #endif

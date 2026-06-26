@@ -46,10 +46,23 @@ void Buffer::setMemoryInfo() {
 }
 
 void Buffer::write(const void* data, uint32_t size, uint32_t offset) {
-    void* mappedData;
-    vkMapMemory(device->getHandle(), memory, offset, size, 0, &mappedData);
-    memcpy(mappedData, data, size);
+    if (!mapped) {
+        mapMemory();
+    }
+    memcpy((char*)mappedMemory + offset, data, size);
+    if (!mapped) {
+        unmapMemory();
+    }
+}
+
+void Buffer::mapMemory() {
+    vkMapMemory(device->getHandle(), memory, 0, size, 0, &mappedMemory);
+    mapped = true;
+}
+
+void Buffer::unmapMemory() {
     vkUnmapMemory(device->getHandle(), memory);
+    mapped = false;
 }
 
 Buffer::~Buffer() {

@@ -1,10 +1,16 @@
-#include <katra/render/graphics_pipeline.h>
+#include <katra/pipeline/graphics_pipeline.h>
 
 /**
  * @brief Construct a new Graphics Pipeline object
  * 
  */
-GraphicsPipeline::GraphicsPipeline(RenderPass* renderPass, std::string vertShaderPath, std::string fragShaderPath, VertexInput* vertexInput): device(renderPass->getDevice()), renderPass(renderPass), vertexInput(vertexInput) {
+GraphicsPipeline::GraphicsPipeline(
+    RenderPass* renderPass, 
+    std::string vertShaderPath, 
+    std::string fragShaderPath, 
+    VertexInput* vertexInput,
+    std::vector<DescriptorLayout*> descriptorLayouts
+): device(renderPass->getDevice()), renderPass(renderPass), vertexInput(vertexInput), descriptorLayouts(descriptorLayouts) {
     
     // Create shader modules
     vertShaderModule = new ShaderModule(device, vertShaderPath);
@@ -111,7 +117,7 @@ void GraphicsPipeline::setRasterizer() {
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer.lineWidth = 1.0f;
     rasterizer.depthBiasEnable = VK_FALSE;
     rasterizer.depthBiasConstantFactor = 0.0f; // Optional
@@ -168,10 +174,15 @@ void GraphicsPipeline::setColorBlendingState() {
  * @brief Set the pipeline layout info
  */
 void GraphicsPipeline::setPipelineLayoutInfo() {
+    descriptorLayoutHandles.clear();
+    for (DescriptorLayout* descriptorLayout : descriptorLayouts) {
+        descriptorLayoutHandles.push_back(descriptorLayout->getHandle());
+    }
+
     pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 0; // Optional
-    pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
+    pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorLayouts.size());
+    pipelineLayoutInfo.pSetLayouts = descriptorLayoutHandles.data();
     pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
     pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 }

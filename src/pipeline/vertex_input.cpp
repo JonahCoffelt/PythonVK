@@ -1,4 +1,4 @@
-#include <katra/render/vertex_input.h>
+#include <katra/pipeline/vertex_input.h>
 
 /**
  * @brief Construct a new Vertex Input object
@@ -31,6 +31,4 @@ void VertexInput::setCreateInfo() {
     createInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 }
 
-VertexInput::~VertexInput() {
-    
-}
+VertexInput::~VertexInput() {}

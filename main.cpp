@@ -5,6 +5,12 @@ struct Vertex {
     glm::vec3 color;
 };
 
+struct UniformBufferObject {
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
+
 const std::vector<const char*> REQUIRED_DEVICE_EXTENSIONS = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
@@ -49,7 +55,12 @@ private:
     LogicalDevice* logicalDevice;
     SwapChain* swapChain;
     RenderPass* renderPass;
+    
+    // Pipeline
     GraphicsPipeline* graphicsPipeline;
+    VertexInput* vertexInput;
+    DescriptorLayout* descriptorLayout;
+
     std::vector<Framebuffer*> swapChainFramebuffers;
     CommandPool* commandPool;
     std::vector<CommandBuffer*> commandBuffers;
@@ -58,9 +69,16 @@ private:
     std::vector<Fence*> inFlightFences;
     uint32_t currentFrame = 0;
 
-    VertexInput* vertexInput;
     Buffer* vertexBuffer;
     Buffer* indexBuffer;
+    std::vector<Buffer*> uniformBuffers;
+
+    DescriptorPool* descriptorPool;
+    std::vector<DescriptorSet*> descriptorSets;
+
+    // VkDescriptorSetLayout descriptorSetLayout;
+    // VkPipelineLayout pipelineLayout;
+
 
     void initVulkan() {
         instance = new Instance("Katra", enableValidationLayers, VK_API_VERSION_1_2);
@@ -77,7 +95,10 @@ private:
             {0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, pos)},
             {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)}
         });
-        graphicsPipeline = new GraphicsPipeline(renderPass, "shaders/shader.vert.spv", "shaders/shader.frag.spv", vertexInput);
+        descriptorLayout = new DescriptorLayout(logicalDevice, {
+            {0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT}
+        });
+        graphicsPipeline = new GraphicsPipeline(renderPass, "shaders/shader.vert.spv", "shaders/shader.frag.spv", vertexInput, {descriptorLayout});
         createFramebuffers();
 
         commandPool = new CommandPool(logicalDevice, logicalDevice->getGraphicsFamilyIndex());
@@ -85,6 +106,7 @@ private:
         createSyncObjects();
 
         createBuffers();
+        createDescriptors();
     }
 
     void createBuffers() {
@@ -141,6 +163,29 @@ private:
         logicalDevice->waitIdle();
         delete stagingBuffer;
         delete copyCommand;
+    }
+
+    void createDescriptors() {
+        descriptorPool = new DescriptorPool(logicalDevice, swapChain->getImageCount(), {
+            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2}
+        });
+
+        for (size_t i = 0; i < swapChain->getImageCount(); i++) {
+            Buffer* uniformBuffer = new Buffer(
+                logicalDevice, 
+                sizeof(UniformBufferObject), 
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+            );
+            uniformBuffer->mapMemory();
+            uniformBuffers.push_back(uniformBuffer);
+        }
+
+        for (size_t i = 0; i < swapChain->getImageCount(); i++) {
+            DescriptorSet* descriptorSet = new DescriptorSet(descriptorPool, descriptorLayout);
+            descriptorSets.push_back(descriptorSet);
+            descriptorSet->update(uniformBuffers[i], 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        }
     }
 
     void pickPhysicalDevice() {
@@ -207,6 +252,7 @@ private:
     void drawFrame() {
         // Get the in flight fence, command buffer, and image available semaphore for the current frame
         Fence* inFlightFence = inFlightFences[currentFrame];
+
         
         // Make sure no other frame is rendering
         inFlightFence->wait();
@@ -215,6 +261,9 @@ private:
         // Aquire Image from swap chain
         Semaphore* imageAvailableSemaphore = imageAvailableSemaphores[currentFrame];
         uint32_t imageIndex = swapChain->acquireImage(imageAvailableSemaphore);
+       
+        // Update the uniform buffer
+        updateUniformBuffer(imageIndex);
 
         // Get the render finished semaphore and framebuffer for the current image
         Semaphore* renderFinishedSemaphore = renderFinishedSemaphores[imageIndex];
@@ -230,6 +279,7 @@ private:
         commandBuffer->setScissor(0, 0, swapChain->getExtent().width, swapChain->getExtent().height);
         commandBuffer->bindVertexBuffer(vertexBuffer, 0, 0);
         commandBuffer->bindIndexBuffer(indexBuffer);
+        commandBuffer->bindDescriptorSet(graphicsPipeline, descriptorSets[imageIndex], 0);
         commandBuffer->drawIndexed(static_cast<uint32_t>(indices.size()));
         commandBuffer->endRenderPass();
         commandBuffer->end();
@@ -242,6 +292,20 @@ private:
 
         // Increment the current frame
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+    }
+
+    void updateUniformBuffer(uint32_t imageIndex) {
+        static auto startTime = std::chrono::high_resolution_clock::now();
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+        UniformBufferObject ubo{};
+        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.proj = glm::perspective(glm::radians(45.0f), swapChain->getExtent().width / (float) swapChain->getExtent().height, 0.1f, 10.0f);
+        ubo.proj[1][1] *= -1;
+
+        uniformBuffers[imageIndex]->write(&ubo, sizeof(UniformBufferObject));
     }
 
     void cleanup() {
@@ -257,6 +321,10 @@ private:
             delete inFlightFences[i];
             delete imageAvailableSemaphores[i];
         }
+        // Destroy all descriptor sets
+        for (auto descriptorSet : descriptorSets) {
+            delete descriptorSet;
+        }
         // Destroy all framebuffer (must happen before image pipeline destroy)
         for (auto framebuffer : swapChainFramebuffers) {
             delete framebuffer;
@@ -265,7 +333,13 @@ private:
         for (auto commandBuffer : commandBuffers) {
             delete commandBuffer;
         }
+        // Destroy all uniform buffers
+        for (auto uniformBuffer : uniformBuffers) {
+            delete uniformBuffer;
+        }
 
+        delete descriptorPool;
+        delete descriptorLayout;
         delete vertexBuffer;
         delete indexBuffer;
         delete vertexInput;

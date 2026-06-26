@@ -6,7 +6,8 @@
 #include <katra/device/logical_device.h>
 #include <katra/render/render_pass.h>
 #include <katra/render/shader_module.h>
-#include <katra/render/vertex_input.h>
+#include <katra/pipeline/vertex_input.h>
+#include <katra/descriptor/descriptor_layout.h>
 
 
 // Class Declaration
@@ -23,6 +24,8 @@ class GraphicsPipeline {
 
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
         VertexInput* vertexInput;
+        std::vector<DescriptorLayout*> descriptorLayouts;
+        std::vector<VkDescriptorSetLayout> descriptorLayoutHandles;
         VkPipelineInputAssemblyStateCreateInfo inputAssembly;
         std::vector<VkDynamicState> dynamicStates;
         VkPipelineDynamicStateCreateInfo dynamicState;
@@ -46,7 +49,7 @@ class GraphicsPipeline {
         void setPipelineInfo();
 
     public:
-        GraphicsPipeline(RenderPass* renderPass, std::string vertShaderPath, std::string fragShaderPath, VertexInput* vertexInput);
+        GraphicsPipeline(RenderPass* renderPass, std::string vertShaderPath, std::string fragShaderPath, VertexInput* vertexInput, std::vector<DescriptorLayout*> descriptorLayouts);
         ~GraphicsPipeline();
         GraphicsPipeline(const GraphicsPipeline&) = delete;
         GraphicsPipeline& operator=(const GraphicsPipeline&) = delete;

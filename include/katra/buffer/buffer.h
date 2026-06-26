@@ -10,7 +10,8 @@ class Buffer {
 
         VkBuffer buffer = VK_NULL_HANDLE;
         VkDeviceMemory memory = VK_NULL_HANDLE;
-
+        void* mappedMemory = nullptr;
+        bool mapped = false;
 
         uint32_t size;
         VkBufferUsageFlags usage;
@@ -39,9 +40,12 @@ class Buffer {
         Buffer& operator=(const Buffer&) = delete;
 
         void write(const void* data, uint32_t size, uint32_t offset = 0);
+        void mapMemory();
+        void unmapMemory();
 
         inline VkBuffer getHandle() { return buffer; }
         inline VkDeviceMemory getMemory() { return memory; }
+        inline void* getMappedMemoryPointer() { return mappedMemory; }
         inline const VkBufferCreateInfo& getCreateInfo() const { return createInfo; }
         inline const VkMemoryAllocateInfo& getMemoryInfo() const { return memoryInfo; }
         inline uint32_t getSize() { return size; }

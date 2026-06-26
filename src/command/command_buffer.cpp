@@ -88,6 +88,11 @@ void CommandBuffer::bindIndexBuffer(Buffer* buffer, uint32_t offset) {
     vkCmdBindIndexBuffer(commandBuffer, buffer->getHandle(), offset, VK_INDEX_TYPE_UINT16);
 }
 
+void CommandBuffer::bindDescriptorSet(GraphicsPipeline* pipeline, DescriptorSet* descriptorSet, uint32_t firstSet, VkPipelineBindPoint bindPoint) {
+    VkDescriptorSet handle = descriptorSet->getHandle();
+    vkCmdBindDescriptorSets(commandBuffer, bindPoint, pipeline->getLayout(), firstSet, 1, &handle, 0, nullptr);
+}
+
 void CommandBuffer::draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) {
     vkCmdDraw(commandBuffer, vertexCount, instanceCount, firstVertex, firstInstance);
 }
