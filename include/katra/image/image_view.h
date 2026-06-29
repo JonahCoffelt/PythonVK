@@ -27,8 +27,7 @@ class ImageView {
     public:
         ImageView(
             Image* image, 
-            VkImageViewType viewType, 
-            VkFormat format, 
+            VkImageViewType viewType = VK_IMAGE_VIEW_TYPE_2D, 
             VkImageAspectFlags aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
             uint32_t mipLevels = 1,
             uint32_t arrayLayers = 1

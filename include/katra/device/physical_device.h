@@ -69,6 +69,10 @@ class PhysicalDevice {
         bool checkExtensionSupport(std::vector<const char*> requiredExtensions);
         std::vector<const char*> getEnabledExtensionsList(std::vector<const char*> requestedExtensions);
 
+        // Format
+        VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+        VkFormat getDepthFormat();
+
         // Queue Families
         inline const QueueFamilyIndices& getQueueFamilyIndices() const { return queueFamilyIndices; }
         inline bool hasGraphicsFamily() { return queueFamilyIndices.graphicsFamily.has_value(); }

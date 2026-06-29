@@ -154,7 +154,6 @@ void SwapChain::setImageViews() {
         imageViews.push_back(new ImageView(
             images[i],
             VK_IMAGE_VIEW_TYPE_2D,
-            surfaceFormat.format,
             VK_IMAGE_ASPECT_COLOR_BIT
         ));
     }

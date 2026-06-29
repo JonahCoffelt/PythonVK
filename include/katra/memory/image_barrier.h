@@ -15,6 +15,7 @@ class ImageBarrier {
         VkImageMemoryBarrier imageMemoryBarrier;
         VkAccessFlags srcAccessMask;
         VkAccessFlags dstAccessMask;
+        VkFormat format;
         VkPipelineStageFlags sourceStage;
         VkPipelineStageFlags destinationStage;
         VkImageLayout oldLayout;
@@ -35,9 +36,9 @@ class ImageBarrier {
             Image* image, 
             VkImageLayout oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             VkImageLayout newLayout = VK_IMAGE_LAYOUT_UNDEFINED, 
+            VkFormat format = VK_FORMAT_D32_SFLOAT_S8_UINT,
             uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
             uint32_t baseMipLevel = 0,
             uint32_t levelCount = 1,
             uint32_t baseArrayLayer = 0,

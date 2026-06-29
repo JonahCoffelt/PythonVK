@@ -23,6 +23,7 @@
 // Pipeline
 #include <katra/pipeline/graphics_pipeline.h>
 #include <katra/pipeline/vertex_input.h>
+#include <katra/pipeline/depth_stencil.h>
 
 // Device
 #include <katra/device/physical_device.h>

@@ -8,6 +8,7 @@
 #include <katra/render/shader_module.h>
 #include <katra/pipeline/vertex_input.h>
 #include <katra/descriptor/descriptor_layout.h>
+#include <katra/pipeline/depth_stencil.h>
 
 
 // Class Declaration
@@ -22,8 +23,10 @@ class GraphicsPipeline {
         ShaderModule* vertShaderModule;
         ShaderModule* fragShaderModule;
 
+        
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
         VertexInput* vertexInput;
+        DepthStencil* depthStencil;
         std::vector<DescriptorLayout*> descriptorLayouts;
         std::vector<VkDescriptorSetLayout> descriptorLayoutHandles;
         VkPipelineInputAssemblyStateCreateInfo inputAssembly;
@@ -49,7 +52,14 @@ class GraphicsPipeline {
         void setPipelineInfo();
 
     public:
-        GraphicsPipeline(RenderPass* renderPass, std::string vertShaderPath, std::string fragShaderPath, VertexInput* vertexInput, std::vector<DescriptorLayout*> descriptorLayouts);
+        GraphicsPipeline(
+            RenderPass* renderPass, 
+            std::string vertShaderPath, 
+            std::string fragShaderPath, 
+            VertexInput* vertexInput, 
+            std::vector<DescriptorLayout*> descriptorLayouts,
+            DepthStencil* depthStencil = nullptr
+        );
         ~GraphicsPipeline();
         GraphicsPipeline(const GraphicsPipeline&) = delete;
         GraphicsPipeline& operator=(const GraphicsPipeline&) = delete;

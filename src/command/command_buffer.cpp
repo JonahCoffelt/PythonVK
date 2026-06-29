@@ -45,9 +45,15 @@ void CommandBuffer::beginRenderPass(RenderPass* renderPass, Framebuffer* framebu
     renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = framebuffer->getExtent();
     
-    VkClearValue clearValue = {{{clearColor[0], clearColor[1], clearColor[2], clearColor[3]}}};
-    renderPassInfo.clearValueCount = 1;
-    renderPassInfo.pClearValues = &clearValue;
+    std::vector<VkClearValue> clearValues(1);
+    clearValues[0].color = {{clearColor[0], clearColor[1], clearColor[2], clearColor[3]}};
+    if (renderPass->hasDepth()) {
+        VkClearValue depthClear{};
+        depthClear.depthStencil = {1.0f, 0};
+        clearValues.push_back(depthClear);
+    }
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
 
     vkCmdBeginRenderPass(
         commandBuffer, 

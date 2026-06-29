@@ -4,11 +4,13 @@
 ImageView::ImageView(
     Image* image, 
     VkImageViewType viewType, 
-    VkFormat format, 
     VkImageAspectFlags aspectFlags, 
     uint32_t mipLevels, 
     uint32_t arrayLayers
-): device(image->getLogicalDevice()), image(image), viewType(viewType), format(format), aspectFlags(aspectFlags), mipLevels(mipLevels), arrayLayers(arrayLayers) {
+): device(image->getLogicalDevice()), image(image), viewType(viewType), aspectFlags(aspectFlags), mipLevels(mipLevels), arrayLayers(arrayLayers) {
+    // Get format from image
+    format = image->getFormat();
+    
     // Set the create info
     setCreateInfo();
 

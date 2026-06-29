@@ -1,7 +1,7 @@
 #include <katra/katra.h>
 
 struct Vertex {
-    glm::vec2 pos;
+    glm::vec3 pos;
     glm::vec3 color;
     glm::vec2 uv;
 };
@@ -20,14 +20,20 @@ const std::vector<const char*> PREFERED_DEVICE_EXTENSIONS = {
 };
 
 const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+
+    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 };
 
 const std::vector<uint16_t> indices = {
-    0, 1, 2, 2, 3, 0
+    0, 1, 2, 2, 3, 0,
+    4, 5, 6, 6, 7, 4,
 };
 
 bool isDeviceSuitable(PhysicalDevice& device) {
@@ -82,6 +88,10 @@ private:
     ImageView* textureImageView;
     Sampler* textureSampler;
     
+    Image* depthImage;
+    ImageView* depthImageView;
+    DepthStencil* depthStencil;
+    
     void initVulkan() {
         instance = new Instance("Katra", enableValidationLayers, VK_API_VERSION_1_2);
         if (enableValidationLayers) { debugger = new Debugger(instance); }
@@ -90,11 +100,14 @@ private:
 
         pickPhysicalDevice();
         logicalDevice = new LogicalDevice(physicalDevice, REQUIRED_DEVICE_EXTENSIONS, PREFERED_DEVICE_EXTENSIONS);
-                
+        
         swapChain = new SwapChain(logicalDevice, surface);
-        renderPass = new RenderPass(swapChain);
+
+        commandPool = new CommandPool(logicalDevice, logicalDevice->getGraphicsFamilyIndex());
+        createDepthResources();
+        renderPass = new RenderPass(swapChain, depthImageView);
         vertexInput = new VertexInput(logicalDevice, 0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX, {
-            {0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, pos)},
+            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)},
             {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)},
             {0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)}
         });
@@ -102,13 +115,15 @@ private:
             {0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
             {1, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
         });
-        graphicsPipeline = new GraphicsPipeline(renderPass, "shaders/shader.vert.spv", "shaders/shader.frag.spv", vertexInput, {descriptorLayout});
+        depthStencil = new DepthStencil(
+            true, true, VK_COMPARE_OP_LESS, false
+        );
+        graphicsPipeline = new GraphicsPipeline(renderPass, "shaders/shader.vert.spv", "shaders/shader.frag.spv", vertexInput, {descriptorLayout}, depthStencil);
         createFramebuffers();
-
-        commandPool = new CommandPool(logicalDevice, logicalDevice->getGraphicsFamilyIndex());
+        
         createCommandBuffers();
         createSyncObjects();
-
+        
         createBuffers();
         createTextureImage();
         createDescriptors();
@@ -266,12 +281,7 @@ private:
         delete stagingBuffer;
 
         // Create texture image view
-        textureImageView = new ImageView(
-            textureImage, 
-            VK_IMAGE_VIEW_TYPE_2D, 
-            VK_FORMAT_R8G8B8A8_SRGB, 
-            VK_IMAGE_ASPECT_COLOR_BIT
-        );
+        textureImageView = new ImageView(textureImage);
     
         // Create texture sampler
         textureSampler = new Sampler(
@@ -311,7 +321,10 @@ private:
     void createFramebuffers() {
         // Loop through images and create a framebuffer
         for (size_t i = 0; i < swapChain->getImageCount(); i++) {
-            std::vector<VkImageView> attachments = { swapChain->getImageViews()[i]->getHandle() };
+            std::vector<VkImageView> attachments = { 
+                swapChain->getImageViews()[i]->getHandle(),
+                depthImageView->getHandle()
+            };
             swapChainFramebuffers.push_back(new Framebuffer(logicalDevice, renderPass, attachments, 1));
         }
     }
@@ -333,6 +346,42 @@ private:
         for (size_t i = 0; i < swapChain->getImageCount(); i++) {
             renderFinishedSemaphores.push_back(new Semaphore(logicalDevice));
         }
+    }
+
+    void createDepthResources() {
+        VkFormat format = physicalDevice->getDepthFormat();
+        depthImage = new Image(
+            logicalDevice,
+            swapChain->getExtent().width,
+            swapChain->getExtent().height,
+            format,
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+        );
+        VkImageAspectFlags aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
+        if (format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT) {
+            aspectFlags |= VK_IMAGE_ASPECT_STENCIL_BIT;
+        }
+        depthImageView = new ImageView(depthImage, VK_IMAGE_VIEW_TYPE_2D, aspectFlags);
+
+        CommandBuffer* depthCommand = new CommandBuffer(commandPool);
+        Fence* fence = new Fence(logicalDevice);
+        ImageBarrier* barrier = new ImageBarrier(
+            logicalDevice,
+            depthImage,
+            VK_IMAGE_LAYOUT_UNDEFINED, 
+            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+            format
+        );
+        depthCommand->begin();
+        depthCommand->pipelineBarrier(barrier);
+        depthCommand->end();
+        depthCommand->submit(logicalDevice->getGraphicsQueue(), {}, {}, fence);
+        fence->wait();
+        delete barrier;
+        delete depthCommand;
+        delete fence;
     }
 
     void mainLoop() {
@@ -433,6 +482,9 @@ private:
             delete uniformBuffer;
         }
 
+        delete depthStencil;
+        delete depthImageView;
+        delete depthImage;
         delete textureSampler;
         delete textureImageView;
         delete textureImage;

@@ -9,9 +9,18 @@ GraphicsPipeline::GraphicsPipeline(
     std::string vertShaderPath, 
     std::string fragShaderPath, 
     VertexInput* vertexInput,
-    std::vector<DescriptorLayout*> descriptorLayouts
+    std::vector<DescriptorLayout*> descriptorLayouts,
+    DepthStencil* depthStencil
 ): device(renderPass->getDevice()), renderPass(renderPass), vertexInput(vertexInput), descriptorLayouts(descriptorLayouts) {
     
+    // Set depth stencil
+    if (depthStencil) {
+        this->depthStencil = depthStencil;
+    }
+    else {
+        this->depthStencil = new DepthStencil();
+    }
+
     // Create shader modules
     vertShaderModule = new ShaderModule(device, vertShaderPath);
     fragShaderModule = new ShaderModule(device, fragShaderPath);
@@ -200,7 +209,7 @@ void GraphicsPipeline::setPipelineInfo() {
     pipelineInfo.pViewportState = &viewportState;
     pipelineInfo.pRasterizationState = &rasterizer;
     pipelineInfo.pMultisampleState = &multisampling;
-    pipelineInfo.pDepthStencilState = nullptr; // Optional
+    pipelineInfo.pDepthStencilState = &depthStencil->getCreateInfo();
     pipelineInfo.pColorBlendState = &colorBlendingState;
     pipelineInfo.pDynamicState = &dynamicState;
     pipelineInfo.layout = pipelineLayout;
