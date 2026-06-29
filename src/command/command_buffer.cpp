@@ -114,12 +114,12 @@ void CommandBuffer::bindVertexBuffer(Buffer* buffer, uint32_t binding, uint32_t 
     );
 }
 
-void CommandBuffer::bindIndexBuffer(Buffer* buffer, uint32_t offset) {
+void CommandBuffer::bindIndexBuffer(Buffer* buffer, uint32_t offset, VkIndexType indexType) {
     vkCmdBindIndexBuffer(
         commandBuffer, 
         buffer->getHandle(), 
         offset, 
-        VK_INDEX_TYPE_UINT16
+        indexType
     );
 }
 

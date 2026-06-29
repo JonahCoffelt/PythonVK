@@ -30,4 +30,7 @@
 // STB (declarations only — implementation lives in src/util/stb_impl.cpp)
 #include <katra/util/stb_impl.h>
 
+// Tiny Obj (declarations only — implementation lives in src/util/tinyobjloader_impl.cpp)
+#include <katra/util/tinyobjloader_impl.h>
+
 #endif

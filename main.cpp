@@ -19,22 +19,22 @@ const std::vector<const char*> PREFERED_DEVICE_EXTENSIONS = {
     "VK_KHR_portability_subset"
 };
 
-const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+// const std::vector<Vertex> vertices = {
+//     {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+//     {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+//     {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+//     {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
 
-    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-};
+//     {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+//     {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+//     {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+//     {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+// };
 
-const std::vector<uint16_t> indices = {
-    0, 1, 2, 2, 3, 0,
-    4, 5, 6, 6, 7, 4,
-};
+// const std::vector<uint16_t> indices = {
+//     0, 1, 2, 2, 3, 0,
+//     4, 5, 6, 6, 7, 4,
+// };
 
 bool isDeviceSuitable(PhysicalDevice& device) {
     return  device.checkExtensionSupport(REQUIRED_DEVICE_EXTENSIONS) &&
@@ -77,6 +77,8 @@ private:
     std::vector<Fence*> inFlightFences;
     uint32_t currentFrame = 0;
 
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
     Buffer* vertexBuffer;
     Buffer* indexBuffer;
     std::vector<Buffer*> uniformBuffers;
@@ -124,12 +126,15 @@ private:
         createCommandBuffers();
         createSyncObjects();
         
+        loadModel();
         createBuffers();
         createTextureImage();
         createDescriptors();
     }
 
     void createBuffers() {
+        loadModel();
+
         // Create vertex buffer
         vertexBuffer = new Buffer(
             logicalDevice, 
@@ -218,7 +223,7 @@ private:
 
     void createTextureImage() {
         int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load("textures/statue.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        stbi_uc* pixels = stbi_load("textures/viking_room.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         if (!pixels) {
             throw std::runtime_error("failed to load texture image!");
         }
@@ -384,6 +389,44 @@ private:
         delete fence;
     }
 
+    void loadModel() {
+        tinyobj::attrib_t attrib;
+        std::vector<tinyobj::shape_t> shapes;
+        std::vector<tinyobj::material_t> materials;
+        std::string warn;
+        std::string err;
+
+        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, "models/viking_room.obj")) {
+            throw std::runtime_error(err);
+        }
+
+        if (!warn.empty()) {
+            std::cout << warn << std::endl;
+        }
+
+        for (const auto& shape : shapes) {
+            for (const auto& index : shape.mesh.indices) {
+                Vertex vertex{};
+
+                vertex.pos = {
+                    attrib.vertices[3 * index.vertex_index + 0],
+                    attrib.vertices[3 * index.vertex_index + 1],
+                    attrib.vertices[3 * index.vertex_index + 2]
+                };
+                
+                vertex.uv = {
+                    attrib.texcoords[2 * index.texcoord_index + 0],
+                    1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+                };
+                
+                vertex.color = {1.0f, 1.0f, 1.0f};
+        
+                vertices.push_back(vertex);
+                indices.push_back(indices.size());
+            }
+        }
+    }
+
     void mainLoop() {
         while (!glfwWindowShouldClose(window->getHandle())) {
             glfwPollEvents();
@@ -422,7 +465,7 @@ private:
         commandBuffer->setViewport(0.0f, 0.0f, static_cast<float>(swapChain->getExtent().width), static_cast<float>(swapChain->getExtent().height));
         commandBuffer->setScissor(0, 0, swapChain->getExtent().width, swapChain->getExtent().height);
         commandBuffer->bindVertexBuffer(vertexBuffer, 0, 0);
-        commandBuffer->bindIndexBuffer(indexBuffer);
+        commandBuffer->bindIndexBuffer(indexBuffer, 0, VK_INDEX_TYPE_UINT32);
         commandBuffer->bindDescriptorSet(graphicsPipeline, descriptorSets[imageIndex], 0);
         commandBuffer->drawIndexed(static_cast<uint32_t>(indices.size()));
         commandBuffer->endRenderPass();

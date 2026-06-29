@@ -102,6 +102,25 @@ foreach(TEXTURE ${TEXTURE_SOURCES})
     list(APPEND TEXTURE_OUTPUTS ${TEXTURE_OUT})
 endforeach()
 
+# Model copy
+file(GLOB MODEL_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/models/*"
+)
+
+set(MODEL_OUTPUTS "")
+foreach(MODEL ${MODEL_SOURCES})
+    get_filename_component(MODEL_NAME ${MODEL} NAME)
+    set(MODEL_OUT "${CMAKE_CURRENT_BINARY_DIR}/models/${MODEL_NAME}")
+    add_custom_command(
+        OUTPUT  ${MODEL_OUT}
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/models"
+        COMMAND ${CMAKE_COMMAND} -E copy ${MODEL} ${MODEL_OUT}
+        DEPENDS ${MODEL}
+        COMMENT "Copying model: ${MODEL_NAME}"
+    )
+    list(APPEND MODEL_OUTPUTS ${MODEL_OUT})
+endforeach()
+
 # Shader compilation
 file(GLOB SHADER_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.vert"
@@ -158,6 +177,18 @@ add_library(stb_h INTERFACE)
 target_include_directories(stb_h INTERFACE ${stb_SOURCE_DIR})
 target_link_libraries(katra PUBLIC stb_h)
 
+# tinyobjloader
+FetchContent_Declare(
+    tinyobjloader
+    GIT_REPOSITORY https://github.com/tinyobjloader/tinyobjloader.git
+    GIT_TAG v2.0.0-rc1
+)
+FetchContent_MakeAvailable(tinyobjloader)
+
+add_library(tinyobjloader_h INTERFACE)
+target_include_directories(tinyobjloader_h INTERFACE ${tinyobjloader_SOURCE_DIR})
+target_link_libraries(katra PUBLIC tinyobjloader_h)
+
 add_custom_target(CompileShaders ALL DEPENDS ${SPIRV_OUTPUTS})
 add_dependencies(VulkanProject CompileShaders)
 
@@ -166,3 +197,6 @@ add_dependencies(VulkanProject CopyShaders)
 
 add_custom_target(CopyTextures ALL DEPENDS ${TEXTURE_OUTPUTS})
 add_dependencies(VulkanProject CopyTextures)
+
+add_custom_target(CopyModels ALL DEPENDS ${MODEL_OUTPUTS})
+add_dependencies(VulkanProject CopyModels)
