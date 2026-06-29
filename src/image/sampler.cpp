@@ -40,3 +40,10 @@ void Sampler::setCreateInfo() {
     createInfo.compareEnable = VK_FALSE;
     createInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 }
+
+Sampler::~Sampler() {
+    if (sampler != VK_NULL_HANDLE) {
+        vkDestroySampler(device->getHandle(), sampler, nullptr);
+        sampler = VK_NULL_HANDLE;
+    }
+}

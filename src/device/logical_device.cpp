@@ -58,6 +58,7 @@ void LogicalDevice::setDeviceCreateInfo() {
     createInfo.pEnabledFeatures = &deviceFeatures;
     createInfo.enabledExtensionCount = static_cast<uint32_t>(enabledExtensions.size());
     createInfo.ppEnabledExtensionNames = enabledExtensions.data();
+    deviceFeatures.samplerAnisotropy = VK_TRUE;
 }
 
 void LogicalDevice::setDeviceFeatures() {

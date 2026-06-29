@@ -433,6 +433,7 @@ private:
             delete uniformBuffer;
         }
 
+        delete textureSampler;
         delete textureImageView;
         delete textureImage;
         delete descriptorPool;
