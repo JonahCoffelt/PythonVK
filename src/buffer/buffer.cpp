@@ -15,13 +15,11 @@ Buffer::Buffer(
         throw std::runtime_error("failed to create buffer!");
     }
     
-    setMemoryInfo();
-    result = vkAllocateMemory(device->getHandle(), &memoryInfo, nullptr, &memory);
-    if (result != VK_SUCCESS) {
-        throw std::runtime_error("failed to allocate memory!");
-    }
+    VkMemoryRequirements memoryRequirements;
+    vkGetBufferMemoryRequirements(device->getHandle(), buffer, &memoryRequirements);
+    allocation = new Allocation(device, memoryRequirements, memoryType);
 
-    result = vkBindBufferMemory(device->getHandle(), buffer, memory, 0);
+    result = vkBindBufferMemory(device->getHandle(), buffer, allocation->getHandle(), 0);
     if (result != VK_SUCCESS) {
         throw std::runtime_error("failed to bind buffer memory!");
     }
@@ -36,40 +34,33 @@ void Buffer::setCreateInfo() {
     createInfo.flags = flags;
 }
 
-void Buffer::setMemoryInfo() {
-    vkGetBufferMemoryRequirements(device->getHandle(), buffer, &memoryRequirements);
-
-    memoryInfo = {};
-    memoryInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    memoryInfo.allocationSize = memoryRequirements.size;
-    memoryInfo.memoryTypeIndex = device->getPhysicalDevice()->findMemoryType(memoryRequirements.memoryTypeBits, memoryType);
-}
-
 void Buffer::write(const void* data, uint32_t size, uint32_t offset) {
     if (!mapped) {
-        vkMapMemory(device->getHandle(), memory, 0, size, 0, &mappedMemory);
+        vkMapMemory(device->getHandle(), allocation->getHandle(), 0, size, 0, &mappedMemory);
     }
     memcpy((char*)mappedMemory + offset, data, size);
     if (!mapped) {
-        vkUnmapMemory(device->getHandle(), memory);
+        vkUnmapMemory(device->getHandle(), allocation->getHandle());
     }
 }
 
 void Buffer::mapMemory() {
-    vkMapMemory(device->getHandle(), memory, 0, size, 0, &mappedMemory);
+    vkMapMemory(device->getHandle(), allocation->getHandle(), 0, size, 0, &mappedMemory);
     mapped = true;
 }
 
 void Buffer::unmapMemory() {
-    vkUnmapMemory(device->getHandle(), memory);
+    vkUnmapMemory(device->getHandle(), allocation->getHandle());
     mapped = false;
 }
 
 Buffer::~Buffer() {
     if (buffer != VK_NULL_HANDLE) {
         vkDestroyBuffer(device->getHandle(), buffer, nullptr);
+        buffer = VK_NULL_HANDLE;
     }
-    if (memory != VK_NULL_HANDLE) {
-        vkFreeMemory(device->getHandle(), memory, nullptr);
+    if (allocation != nullptr) {
+        delete allocation;
+        allocation = nullptr;
     }
 }

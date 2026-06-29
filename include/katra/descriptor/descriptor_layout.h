@@ -28,7 +28,10 @@ class DescriptorLayout {
         void setCreateInfo();
 
     public:
-        DescriptorLayout(LogicalDevice* device, std::vector<DescriptorLayoutBinding> bindings);
+        DescriptorLayout(
+            LogicalDevice* device, 
+            std::vector<DescriptorLayoutBinding> bindings
+        );
         ~DescriptorLayout();
         DescriptorLayout(const DescriptorLayout&) = delete;
         DescriptorLayout& operator=(const DescriptorLayout&) = delete;

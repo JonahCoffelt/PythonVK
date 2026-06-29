@@ -1,15 +1,19 @@
 #ifndef KATRA_BUFFER_H
 #define KATRA_BUFFER_H
 
+// Includes
 #include <katra/util/includes.h>
 #include <katra/device/logical_device.h>
+#include <katra/memory/allocation.h>
 
+
+// Class Declaration
 class Buffer {
     private:
         LogicalDevice* device;
 
         VkBuffer buffer = VK_NULL_HANDLE;
-        VkDeviceMemory memory = VK_NULL_HANDLE;
+        Allocation* allocation;
         void* mappedMemory = nullptr;
         bool mapped = false;
 
@@ -20,11 +24,8 @@ class Buffer {
         VkFlags flags;
 
         VkBufferCreateInfo createInfo{};
-        VkMemoryRequirements memoryRequirements;
-        VkMemoryAllocateInfo memoryInfo{};
 
         void setCreateInfo();
-        void setMemoryInfo();
 
     public:
         Buffer(
@@ -44,10 +45,10 @@ class Buffer {
         void unmapMemory();
 
         inline VkBuffer getHandle() { return buffer; }
-        inline VkDeviceMemory getMemory() { return memory; }
+        inline Allocation* getAllocation() { return allocation; }
+        inline LogicalDevice* getLogicalDevice() { return device; }
         inline void* getMappedMemoryPointer() { return mappedMemory; }
         inline const VkBufferCreateInfo& getCreateInfo() const { return createInfo; }
-        inline const VkMemoryAllocateInfo& getMemoryInfo() const { return memoryInfo; }
         inline uint32_t getSize() { return size; }
         inline VkBufferUsageFlags getUsage() { return usage; }
         inline VkSharingMode getSharingMode() { return sharingMode; }

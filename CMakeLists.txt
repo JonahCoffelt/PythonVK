@@ -83,6 +83,25 @@ foreach(SHADER ${SHADER_SOURCES})
     list(APPEND SHADER_OUTPUTS ${SHADER_OUT})
 endforeach()
 
+# Texture copy
+file(GLOB TEXTURE_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/textures/*"
+)
+
+set(TEXTURE_OUTPUTS "")
+foreach(TEXTURE ${TEXTURE_SOURCES})
+    get_filename_component(TEXTURE_NAME ${TEXTURE} NAME)
+    set(TEXTURE_OUT "${CMAKE_CURRENT_BINARY_DIR}/textures/${TEXTURE_NAME}")
+    add_custom_command(
+        OUTPUT  ${TEXTURE_OUT}
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/textures"
+        COMMAND ${CMAKE_COMMAND} -E copy ${TEXTURE} ${TEXTURE_OUT}
+        DEPENDS ${TEXTURE}
+        COMMENT "Copying texture: ${TEXTURE_NAME}"
+    )
+    list(APPEND TEXTURE_OUTPUTS ${TEXTURE_OUT})
+endforeach()
+
 # Shader compilation
 file(GLOB SHADER_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.vert"
@@ -125,9 +144,25 @@ FetchContent_MakeAvailable(glm)
 
 add_library(glm_h INTERFACE)
 target_include_directories(glm_h INTERFACE ${glm_SOURCE_DIR})
+target_link_libraries(katra PUBLIC glm_h)
+
+# stb
+FetchContent_Declare(
+    stb
+    GIT_REPOSITORY https://github.com/nothings/stb.git
+    GIT_TAG 31c1ad37456438565541f4919958214b6e762fb4
+)
+FetchContent_MakeAvailable(stb)
+
+add_library(stb_h INTERFACE)
+target_include_directories(stb_h INTERFACE ${stb_SOURCE_DIR})
+target_link_libraries(katra PUBLIC stb_h)
 
 add_custom_target(CompileShaders ALL DEPENDS ${SPIRV_OUTPUTS})
 add_dependencies(VulkanProject CompileShaders)
 
 add_custom_target(CopyShaders ALL DEPENDS ${SHADER_OUTPUTS})
 add_dependencies(VulkanProject CopyShaders)
+
+add_custom_target(CopyTextures ALL DEPENDS ${TEXTURE_OUTPUTS})
+add_dependencies(VulkanProject CopyTextures)

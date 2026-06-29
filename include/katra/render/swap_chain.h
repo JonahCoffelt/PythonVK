@@ -8,6 +8,8 @@
 #include <katra/device/physical_device.h>
 #include <katra/device/logical_device.h>
 #include <katra/synchronization/semaphore.h>
+#include <katra/image/image.h>
+#include <katra/image/image_view.h>
 
 // Class Declaration
 class SwapChain {
@@ -28,8 +30,8 @@ class SwapChain {
 
         std::vector<uint32_t> queueFamilyIndices;
 
-        std::vector<VkImage> images;
-        std::vector<VkImageView> imageViews;
+        std::vector<Image*> images;
+        std::vector<ImageView*> imageViews;
         uint32_t imageCount;
 
         void setCreateInfo();
@@ -65,8 +67,8 @@ class SwapChain {
         inline const VkExtent2D& getExtent() const { return extent; }
         inline const std::vector<uint32_t>& getQueueFamilyIndices() const { return queueFamilyIndices; }
         inline uint32_t getImageCount() const { return imageCount; }
-        inline const std::vector<VkImage>& getImages() const { return images; }
-        inline const std::vector<VkImageView>& getImageViews() const { return imageViews; }
+        inline const std::vector<Image*>& getImages() const { return images; }
+        inline const std::vector<ImageView*>& getImageViews() const { return imageViews; }
         inline int getWidth() const { return width; }
         inline int getHeight() const { return height; }
 };

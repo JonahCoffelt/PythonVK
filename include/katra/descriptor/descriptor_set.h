@@ -7,6 +7,8 @@
 #include <katra/descriptor/descriptor_pool.h>
 #include <katra/descriptor/descriptor_layout.h>
 #include <katra/buffer/buffer.h>
+#include <katra/image/image_view.h>
+#include <katra/image/sampler.h>
 
 
 // Class Declaration
@@ -27,7 +29,8 @@ class DescriptorSet {
         DescriptorSet(const DescriptorSet&) = delete;
         DescriptorSet& operator=(const DescriptorSet&) = delete;
 
-        void update(Buffer* buffer, uint32_t binding, VkDescriptorType descriptorType);
+        void update(Buffer* buffer, uint32_t binding);
+        void update(ImageView* imageView, Sampler* sampler, uint32_t binding);
 
         inline const VkDescriptorSet& getHandle() const { return descriptorSet; }
         inline DescriptorPool* getPool() { return pool; }

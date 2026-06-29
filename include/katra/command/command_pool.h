@@ -21,6 +21,7 @@ class CommandPool {
         ~CommandPool();
 
         inline VkCommandPool& getHandle() { return commandPool; }
+        inline LogicalDevice* getLogicalDevice() { return device; }
         inline const VkCommandPoolCreateInfo& getCreateInfo() const { return createInfo; }
         inline LogicalDevice* getDevice() { return device; }
         inline uint32_t getQueueFamilyIndex() { return queueFamilyIndex; }

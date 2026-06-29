@@ -102,35 +102,35 @@ class PhysicalDevice {
 
         // Device Features
         // General
-        inline VkBool32 getRobustBufferAccess() { return deviceFeatures.robustBufferAccess; } 
-        inline VkBool32 getSamplerAnisotropy() { return deviceFeatures.samplerAnisotropy; }
-        inline VkBool32 getDepthClamp() { return deviceFeatures.depthClamp; }
-        inline VkBool32 getFillModeNonSolid() { return deviceFeatures.fillModeNonSolid; }
-        inline VkBool32 getIndependentBlend() { return deviceFeatures.independentBlend; }
+        inline VkBool32 hasRobustBufferAccess() { return deviceFeatures.robustBufferAccess; } 
+        inline VkBool32 hasSamplerAnisotropy() { return deviceFeatures.samplerAnisotropy; }
+        inline VkBool32 hasDepthClamp() { return deviceFeatures.depthClamp; }
+        inline VkBool32 hasFillModeNonSolid() { return deviceFeatures.fillModeNonSolid; }
+        inline VkBool32 hasIndependentBlend() { return deviceFeatures.independentBlend; }
         // 3D Rendering
-        inline VkBool32 getMultiDrawIndirect() { return deviceFeatures.multiDrawIndirect; }
-        inline VkBool32 getDrawIndirectFirstInstance() { return deviceFeatures.drawIndirectFirstInstance; }
-        inline VkBool32 getGeometryShader() { return deviceFeatures.geometryShader; }
-        inline VkBool32 getTessellationShader() { return deviceFeatures.tessellationShader; }
-        inline VkBool32 getSampleRateShading() { return deviceFeatures.sampleRateShading; }
-        inline VkBool32 getMultiViewport() { return deviceFeatures.multiViewport; }
-        inline VkBool32 getDepthBounds() { return deviceFeatures.depthBounds; }
-        inline VkBool32 getWideLines() { return deviceFeatures.wideLines; }
+        inline VkBool32 hasMultiDrawIndirect() { return deviceFeatures.multiDrawIndirect; }
+        inline VkBool32 hasDrawIndirectFirstInstance() { return deviceFeatures.drawIndirectFirstInstance; }
+        inline VkBool32 hasGeometryShader() { return deviceFeatures.geometryShader; }
+        inline VkBool32 hasTessellationShader() { return deviceFeatures.tessellationShader; }
+        inline VkBool32 hasSampleRateShading() { return deviceFeatures.sampleRateShading; }
+        inline VkBool32 hasMultiViewport() { return deviceFeatures.multiViewport; }
+        inline VkBool32 hasDepthBounds() { return deviceFeatures.depthBounds; }
+        inline VkBool32 hasWideLines() { return deviceFeatures.wideLines; }
         // Compute Shaders
-        inline VkBool32 getShaderFloat64() { return deviceFeatures.shaderFloat64; }
-        inline VkBool32 getShaderInt64() { return deviceFeatures.shaderInt64; }
-        inline VkBool32 getShaderInt16() { return deviceFeatures.shaderInt16; }
-        inline VkBool32 getVertexPipelineStoresAndAtomics() { return deviceFeatures.vertexPipelineStoresAndAtomics; }
-        inline VkBool32 getFragmentStoresAndAtomics() { return deviceFeatures.fragmentStoresAndAtomics; }
-        inline VkBool32 getShaderStorageImageExtendedFormats() { return deviceFeatures.shaderStorageImageExtendedFormats; }
-        inline VkBool32 getShaderUniformBufferArrayDynamicIndexing() { return deviceFeatures.shaderUniformBufferArrayDynamicIndexing; }
-        inline VkBool32 getShaderSampledImageArrayDynamicIndexing() { return deviceFeatures.shaderSampledImageArrayDynamicIndexing; }
+        inline VkBool32 hasShaderFloat64() { return deviceFeatures.shaderFloat64; }
+        inline VkBool32 hasShaderInt64() { return deviceFeatures.shaderInt64; }
+        inline VkBool32 hasShaderInt16() { return deviceFeatures.shaderInt16; }
+        inline VkBool32 hasVertexPipelineStoresAndAtomics() { return deviceFeatures.vertexPipelineStoresAndAtomics; }
+        inline VkBool32 hasFragmentStoresAndAtomics() { return deviceFeatures.fragmentStoresAndAtomics; }
+        inline VkBool32 hasShaderStorageImageExtendedFormats() { return deviceFeatures.shaderStorageImageExtendedFormats; }
+        inline VkBool32 hasShaderUniformBufferArrayDynamicIndexing() { return deviceFeatures.shaderUniformBufferArrayDynamicIndexing; }
+        inline VkBool32 hasShaderSampledImageArrayDynamicIndexing() { return deviceFeatures.shaderSampledImageArrayDynamicIndexing; }
         // Texture Compression
-        inline VkBool32 getTextureCompressionBC() { return deviceFeatures.textureCompressionBC; }
-        inline VkBool32 getTextureCompressionASTC_LDR() { return deviceFeatures.textureCompressionASTC_LDR; }
+        inline VkBool32 hasTextureCompressionBC() { return deviceFeatures.textureCompressionBC; }
+        inline VkBool32 hasTextureCompressionASTC_LDR() { return deviceFeatures.textureCompressionASTC_LDR; }
         // Sparse Resources
-        inline VkBool32 getSparseBinding() { return deviceFeatures.sparseBinding; }
-        inline VkBool32 getSparseResidencyImage2D() { return deviceFeatures.sparseResidencyImage2D; }
+        inline VkBool32 hasSparseBinding() { return deviceFeatures.sparseBinding; }
+        inline VkBool32 hasSparseResidencyImage2D() { return deviceFeatures.sparseResidencyImage2D; }
 
         // Memory properties
         inline uint32_t getMemoryTypeCount() { return memoryProperties.memoryTypeCount; }

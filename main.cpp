@@ -3,6 +3,7 @@
 struct Vertex {
     glm::vec2 pos;
     glm::vec3 color;
+    glm::vec2 uv;
 };
 
 struct UniformBufferObject {
@@ -19,10 +20,10 @@ const std::vector<const char*> PREFERED_DEVICE_EXTENSIONS = {
 };
 
 const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
 };
 
 const std::vector<uint16_t> indices = {
@@ -33,7 +34,8 @@ bool isDeviceSuitable(PhysicalDevice& device) {
     return  device.checkExtensionSupport(REQUIRED_DEVICE_EXTENSIONS) &&
             device.supportsSwapChain() &&
             device.hasGraphicsFamily() && 
-            device.hasPresentFamily();
+            device.hasPresentFamily() &&
+            device.hasSamplerAnisotropy();
 }
 
 class HelloTriangleApplication {
@@ -76,10 +78,10 @@ private:
     DescriptorPool* descriptorPool;
     std::vector<DescriptorSet*> descriptorSets;
 
-    // VkDescriptorSetLayout descriptorSetLayout;
-    // VkPipelineLayout pipelineLayout;
-
-
+    Image* textureImage;
+    ImageView* textureImageView;
+    Sampler* textureSampler;
+    
     void initVulkan() {
         instance = new Instance("Katra", enableValidationLayers, VK_API_VERSION_1_2);
         if (enableValidationLayers) { debugger = new Debugger(instance); }
@@ -93,10 +95,12 @@ private:
         renderPass = new RenderPass(swapChain);
         vertexInput = new VertexInput(logicalDevice, 0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX, {
             {0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, pos)},
-            {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)}
+            {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)},
+            {0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)}
         });
         descriptorLayout = new DescriptorLayout(logicalDevice, {
-            {0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT}
+            {0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
+            {1, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
         });
         graphicsPipeline = new GraphicsPipeline(renderPass, "shaders/shader.vert.spv", "shaders/shader.frag.spv", vertexInput, {descriptorLayout});
         createFramebuffers();
@@ -106,6 +110,7 @@ private:
         createSyncObjects();
 
         createBuffers();
+        createTextureImage();
         createDescriptors();
     }
 
@@ -171,9 +176,11 @@ private:
 
     void createDescriptors() {
         descriptorPool = new DescriptorPool(logicalDevice, swapChain->getImageCount(), {
-            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, swapChain->getImageCount()}
+            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, swapChain->getImageCount()},
+            {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, swapChain->getImageCount()}
         });
 
+        // Create uniform buffers
         for (size_t i = 0; i < swapChain->getImageCount(); i++) {
             Buffer* uniformBuffer = new Buffer(
                 logicalDevice, 
@@ -185,13 +192,97 @@ private:
             uniformBuffers.push_back(uniformBuffer);
         }
 
+        // Bind uniform buffers and sampler
         for (size_t i = 0; i < swapChain->getImageCount(); i++) {
             DescriptorSet* descriptorSet = new DescriptorSet(descriptorPool, descriptorLayout);
             descriptorSets.push_back(descriptorSet);
-            descriptorSet->update(uniformBuffers[i], 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            descriptorSet->update(uniformBuffers[i], 0);
+            descriptorSet->update(textureImageView, textureSampler, 1);
         }
     }
 
+    void createTextureImage() {
+        int texWidth, texHeight, texChannels;
+        stbi_uc* pixels = stbi_load("textures/statue.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        if (!pixels) {
+            throw std::runtime_error("failed to load texture image!");
+        }
+
+        // Get image size
+        VkDeviceSize imageSize = texWidth * texHeight * 4;
+
+        // Create staging buffer
+        Buffer* stagingBuffer = new Buffer(
+            logicalDevice, 
+            imageSize, 
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+        );
+        stagingBuffer->write(pixels, imageSize);
+        stbi_image_free(pixels);
+
+        textureImage = new Image(
+            logicalDevice, 
+            texWidth, 
+            texHeight, 
+            VK_FORMAT_R8G8B8A8_SRGB, 
+            VK_IMAGE_TILING_OPTIMAL, 
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
+        );
+        
+        // Create command buffer and fence
+        CommandBuffer* imageCopyCommand = new CommandBuffer(commandPool);
+        Fence* fence = new Fence(logicalDevice);
+        imageCopyCommand->begin();
+
+        // Transition image to transfer destination optimal layout
+        ImageBarrier* imageBarrier = new ImageBarrier(
+            logicalDevice, 
+            textureImage, 
+            VK_IMAGE_LAYOUT_UNDEFINED, 
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+        );
+        imageCopyCommand->pipelineBarrier(imageBarrier);
+        delete imageBarrier;
+        
+        // Copy buffer to image
+        imageCopyCommand->copyBufferToImage(stagingBuffer, textureImage, texWidth, texHeight, 0, 0, 0, 0, 1);
+        
+        // Transition image to shader read only optimal layout
+        imageBarrier = new ImageBarrier(
+            logicalDevice, 
+            textureImage, 
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        );
+        imageCopyCommand->pipelineBarrier(imageBarrier);
+        delete imageBarrier;
+        
+        imageCopyCommand->end();
+        imageCopyCommand->submit(logicalDevice->getGraphicsQueue(), {}, {}, fence);
+        fence->wait();
+        delete fence;
+        delete imageCopyCommand;
+        delete stagingBuffer;
+
+        // Create texture image view
+        textureImageView = new ImageView(
+            textureImage, 
+            VK_IMAGE_VIEW_TYPE_2D, 
+            VK_FORMAT_R8G8B8A8_SRGB, 
+            VK_IMAGE_ASPECT_COLOR_BIT
+        );
+    
+        // Create texture sampler
+        textureSampler = new Sampler(
+            logicalDevice, 
+            VK_FILTER_LINEAR, 
+            VK_SAMPLER_MIPMAP_MODE_LINEAR, 
+            VK_SAMPLER_ADDRESS_MODE_REPEAT, 
+            16.0f
+        );
+    }
+    
     void pickPhysicalDevice() {
         // Get all physical devices
         std::vector<PhysicalDevice> physicalDevices = getPhysicalDevices(instance, surface);
@@ -220,7 +311,7 @@ private:
     void createFramebuffers() {
         // Loop through images and create a framebuffer
         for (size_t i = 0; i < swapChain->getImageCount(); i++) {
-            std::vector<VkImageView> attachments = { swapChain->getImageViews()[i] };
+            std::vector<VkImageView> attachments = { swapChain->getImageViews()[i]->getHandle() };
             swapChainFramebuffers.push_back(new Framebuffer(logicalDevice, renderPass, attachments, 1));
         }
     }
@@ -342,6 +433,8 @@ private:
             delete uniformBuffer;
         }
 
+        delete textureImageView;
+        delete textureImage;
         delete descriptorPool;
         delete descriptorLayout;
         delete vertexBuffer;

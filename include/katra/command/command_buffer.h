@@ -10,6 +10,7 @@
 #include <katra/synchronization/fence.h>
 #include <katra/buffer/buffer.h>
 #include <katra/descriptor/descriptor_set.h>
+#include <katra/memory/image_barrier.h>
 
 
 class CommandBuffer {
@@ -29,6 +30,7 @@ class CommandBuffer {
         ~CommandBuffer();
 
         inline CommandPool* getPool() { return pool; }
+        inline LogicalDevice* getLogicalDevice() { return device; }
         inline VkCommandBuffer& getHandle() { return commandBuffer; }
         inline const VkCommandBufferAllocateInfo& getCreateInfo() const { return createInfo; }
         inline const VkCommandBufferLevel getLevel() const { return level; }
@@ -47,6 +49,8 @@ class CommandBuffer {
         void draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0, uint32_t firstInstance = 0);
         void drawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0, uint32_t vertexOffset = 0, uint32_t firstInstance = 0);
         void copyBuffer(Buffer* src, Buffer* dst, uint32_t size, uint32_t srcOffset = 0, uint32_t dstOffset = 0);
+        void copyBufferToImage(Buffer* src, Image* dst, uint32_t width, uint32_t height, uint32_t srcOffset = 0, uint32_t dstOffset = 0, uint32_t mipLLevel = 0, uint32_t baseArrayLayer = 0, uint32_t layerCount = 1);
+        void pipelineBarrier(ImageBarrier* imageBarrier);
 
         void submit(VkQueue queue, std::vector<Semaphore*> waitSemaphores = {}, std::vector<Semaphore*> signalSemaphores = {}, Fence* fence = nullptr, VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 };

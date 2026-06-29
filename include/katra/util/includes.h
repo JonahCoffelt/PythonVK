@@ -1,3 +1,6 @@
+#ifndef KATRA_INCLUDES_H
+#define KATRA_INCLUDES_H
+
 #include <vulkan/vulkan.h>
 
 // STLIB
@@ -22,3 +25,8 @@
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+// STB (declarations only — implementation lives in src/util/stb_impl.cpp)
+#include <katra/util/stb_impl.h>
+
+#endif

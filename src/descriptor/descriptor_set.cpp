@@ -25,7 +25,7 @@ void DescriptorSet::setAllocateInfo() {
     allocateInfo.descriptorSetCount = 1;
 }
 
-void DescriptorSet::update(Buffer* buffer, uint32_t binding, VkDescriptorType descriptorType) {
+void DescriptorSet::update(Buffer* buffer, uint32_t binding) {
     // Set the buffer info
     VkDescriptorBufferInfo bufferInfo{};
     bufferInfo.buffer = buffer->getHandle();
@@ -38,11 +38,30 @@ void DescriptorSet::update(Buffer* buffer, uint32_t binding, VkDescriptorType de
     descriptorWrite.dstSet = descriptorSet;
     descriptorWrite.dstBinding = binding;
     descriptorWrite.dstArrayElement = 0;
-    descriptorWrite.descriptorType = descriptorType;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     descriptorWrite.descriptorCount = 1;
     descriptorWrite.pBufferInfo = &bufferInfo;
-    descriptorWrite.pImageInfo = nullptr; // Optional
-    descriptorWrite.pTexelBufferView = nullptr; // Optional
+
+    // Update the descriptor set
+    vkUpdateDescriptorSets(device->getHandle(), 1, &descriptorWrite, 0, nullptr);
+}
+
+void DescriptorSet::update(ImageView* imageView, Sampler* sampler, uint32_t binding) {
+    // Set the image info
+    VkDescriptorImageInfo imageInfo{};
+    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageInfo.imageView = imageView->getHandle();
+    imageInfo.sampler = sampler->getHandle();
+
+    // Set the write descriptor set
+    VkWriteDescriptorSet descriptorWrite{};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.dstSet = descriptorSet;
+    descriptorWrite.dstBinding = binding;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pImageInfo = &imageInfo;
 
     // Update the descriptor set
     vkUpdateDescriptorSets(device->getHandle(), 1, &descriptorWrite, 0, nullptr);
