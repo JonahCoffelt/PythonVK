@@ -6,24 +6,25 @@ ImageBarrier::ImageBarrier(
     VkImageLayout oldLayout, 
     VkImageLayout newLayout, 
     VkFormat format,
+    uint32_t baseMipLevel,
+    uint32_t levelCount,
+    uint32_t baseArrayLayer,
+    uint32_t layerCount,
     uint32_t srcQueueFamilyIndex, 
-    uint32_t dstQueueFamilyIndex, 
-    uint32_t baseMipLevel, 
-    uint32_t levelCount, 
-    uint32_t baseArrayLayer, 
-    uint32_t layerCount): 
+    uint32_t dstQueueFamilyIndex
+): 
     device(device), 
     image(image), 
+    format(format),
     oldLayout(oldLayout), 
     newLayout(newLayout), 
-    format(format),
+    baseMipLevel(baseMipLevel),
+    levelCount(levelCount),
+    baseArrayLayer(baseArrayLayer),
+    layerCount(layerCount),
     srcQueueFamilyIndex(srcQueueFamilyIndex), 
-    dstQueueFamilyIndex(dstQueueFamilyIndex), 
-    baseMipLevel(baseMipLevel), 
-    levelCount(levelCount), 
-    baseArrayLayer(baseArrayLayer), 
-    layerCount(layerCount) {
-
+    dstQueueFamilyIndex(dstQueueFamilyIndex)
+{
     setImageMemoryBarrier();
 }
 
@@ -50,11 +51,23 @@ void ImageBarrier::setImageMemoryBarrier() {
         destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
     } 
     else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-        srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
         dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
         sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
     } 
+    else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
+        srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    }
+    else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+        srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
     else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
         srcAccessMask = 0;
         dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;

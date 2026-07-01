@@ -15,13 +15,17 @@ class RenderPass {
         LogicalDevice* device;
         SwapChain* swapChain;
         ImageView* depthImageView;
+        ImageView* multisampleColorImageView;
+        VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
         VkRenderPassCreateInfo renderPassCreateInfo{};
         std::vector<VkAttachmentDescription> attachments;
         VkAttachmentDescription attachmentDescription{};
         VkAttachmentDescription depthAttachmentDescription{};
+        VkAttachmentDescription resolveAttachmentDescription{};
         VkAttachmentReference attachmentReference{};
         VkAttachmentReference depthAttachmentReference{};
+        VkAttachmentReference resolveAttachmentReference{};
         VkSubpassDescription subpassDescription{};
         VkSubpassDependency subpassDependency{};
 
@@ -30,11 +34,18 @@ class RenderPass {
         void setAttachmentReference();
         void setDepthAttachmentDescription();
         void setDepthAttachmentReference();
+        void setResolveAttachmentDescription();
+        void setResolveAttachmentReference();
         void setSubpassDescription();
         void setSubpassDependency();
 
     public:
-        RenderPass(SwapChain* swapChain, ImageView* depthImageView = nullptr);
+        RenderPass(
+            SwapChain* swapChain,
+            ImageView* depthImageView = nullptr,
+            ImageView* multisampleColorImageView = nullptr,
+            VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT
+        );
         ~RenderPass();
         RenderPass(const RenderPass&) = delete;
         RenderPass& operator=(const RenderPass&) = delete;
@@ -48,8 +59,11 @@ class RenderPass {
         inline LogicalDevice* getDevice() { return device; }
         inline SwapChain* getSwapChain() { return swapChain; }
         inline ImageView* getDepthImageView() { return depthImageView; }
+        inline ImageView* getMultisampleColorImageView() { return multisampleColorImageView; }
+        inline VkSampleCountFlagBits getMsaaSamples() const { return msaaSamples; }
 
         inline bool hasDepth() { return depthImageView != nullptr; }
+        inline bool hasMultisampleColor() { return multisampleColorImageView != nullptr; }
 };
 
 #endif

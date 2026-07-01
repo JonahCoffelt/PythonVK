@@ -5,8 +5,9 @@ Sampler::Sampler(
     VkFilter filter, 
     VkSamplerMipmapMode mipmapMode, 
     VkSamplerAddressMode addressMode, 
-    float anisotropy
-): device(device), filter(filter), mipmapMode(mipmapMode), addressMode(addressMode), anisotropy(anisotropy) {
+    float anisotropy,
+    float maxLod
+): device(device), filter(filter), mipmapMode(mipmapMode), addressMode(addressMode), anisotropy(anisotropy), maxLod(maxLod) {
 
     // Get device anisotropy limit
     float anisotropyLimit = device->getPhysicalDevice()->getLimits().maxSamplerAnisotropy;
@@ -32,7 +33,7 @@ void Sampler::setCreateInfo() {
     createInfo.addressModeW = addressMode;
     createInfo.mipmapMode = mipmapMode;
     createInfo.minLod = 0.0f;
-    createInfo.maxLod = 0.0f;
+    createInfo.maxLod = maxLod;
     createInfo.anisotropyEnable = anisotropy > 1.0f;
     createInfo.maxAnisotropy = anisotropy;
     createInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;

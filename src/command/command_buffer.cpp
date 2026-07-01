@@ -195,6 +195,24 @@ void CommandBuffer::copyBufferToImage(Buffer* src, Image* dst, uint32_t width, u
     );
 }
 
+void CommandBuffer::blitImage(Image* src, Image* dst, ImageRegion srcRegion, ImageSubresource srcSubresource, ImageRegion dstRegion, ImageSubresource dstSubresource, VkFilter filter) {
+    VkImageBlit blit{};
+    blit.srcSubresource = srcSubresource.getSubresourceLayers();
+    blit.dstSubresource = dstSubresource.getSubresourceLayers();
+    blit.srcOffsets[0] = {srcRegion.x, srcRegion.y, srcRegion.z};
+    blit.dstOffsets[0] = {dstRegion.x, dstRegion.y, dstRegion.z};
+    blit.srcOffsets[1] = {srcRegion.x + srcRegion.width, srcRegion.y + srcRegion.height, srcRegion.z + srcRegion.depth};
+    blit.dstOffsets[1] = {dstRegion.x + dstRegion.width, dstRegion.y + dstRegion.height, dstRegion.z + dstRegion.depth};
+    
+    vkCmdBlitImage(
+        commandBuffer, 
+        src->getHandle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 
+        dst->getHandle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+        1, &blit, 
+        filter
+    );
+}
+
 void CommandBuffer::pipelineBarrier(ImageBarrier* imageBarrier) {
     vkCmdPipelineBarrier(
         commandBuffer, 

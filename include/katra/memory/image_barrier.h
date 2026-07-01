@@ -20,13 +20,13 @@ class ImageBarrier {
         VkPipelineStageFlags destinationStage;
         VkImageLayout oldLayout;
         VkImageLayout newLayout;
-        uint32_t srcQueueFamilyIndex;
-        uint32_t dstQueueFamilyIndex;
         VkImageAspectFlags aspectMask;
         uint32_t baseMipLevel;
         uint32_t levelCount;
         uint32_t baseArrayLayer;
         uint32_t layerCount;
+        uint32_t srcQueueFamilyIndex;
+        uint32_t dstQueueFamilyIndex;
 
         void setImageMemoryBarrier();
 
@@ -37,12 +37,12 @@ class ImageBarrier {
             VkImageLayout oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             VkImageLayout newLayout = VK_IMAGE_LAYOUT_UNDEFINED, 
             VkFormat format = VK_FORMAT_D32_SFLOAT_S8_UINT,
-            uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             uint32_t baseMipLevel = 0,
             uint32_t levelCount = 1,
             uint32_t baseArrayLayer = 0,
-            uint32_t layerCount = 1
+            uint32_t layerCount = 1,
+            uint32_t srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            uint32_t dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED
         );
         ~ImageBarrier();
         ImageBarrier(const ImageBarrier&) = delete;
@@ -60,6 +60,18 @@ class ImageBarrier {
         inline VkImageAspectFlags getAspectMask() { return aspectMask; }
         inline uint32_t getBaseMipLevel() { return baseMipLevel; }
         inline uint32_t getLevelCount() { return levelCount; }
+
+        inline void setSrcAccessMask(VkAccessFlags srcAccessMask) { this->srcAccessMask = srcAccessMask; imageMemoryBarrier.srcAccessMask = srcAccessMask; }
+        inline void setDstAccessMask(VkAccessFlags dstAccessMask) { this->dstAccessMask = dstAccessMask; imageMemoryBarrier.dstAccessMask = dstAccessMask; }
+        inline void setOldLayout(VkImageLayout oldLayout) { this->oldLayout = oldLayout; imageMemoryBarrier.oldLayout = oldLayout; }
+        inline void setNewLayout(VkImageLayout newLayout) { this->newLayout = newLayout; imageMemoryBarrier.newLayout = newLayout; }
+        inline void setSrcQueueFamilyIndex(uint32_t srcQueueFamilyIndex) { this->srcQueueFamilyIndex = srcQueueFamilyIndex; imageMemoryBarrier.srcQueueFamilyIndex = srcQueueFamilyIndex; }
+        inline void setDstQueueFamilyIndex(uint32_t dstQueueFamilyIndex) { this->dstQueueFamilyIndex = dstQueueFamilyIndex; imageMemoryBarrier.dstQueueFamilyIndex = dstQueueFamilyIndex; }
+        inline void setAspectMask(VkImageAspectFlags aspectMask) { this->aspectMask = aspectMask; imageMemoryBarrier.subresourceRange.aspectMask = aspectMask; }
+        inline void setBaseMipLevel(uint32_t baseMipLevel) { this->baseMipLevel = baseMipLevel; imageMemoryBarrier.subresourceRange.baseMipLevel = baseMipLevel; }
+        inline void setLevelCount(uint32_t levelCount) { this->levelCount = levelCount; imageMemoryBarrier.subresourceRange.levelCount = levelCount; }
+        inline void setSourceStage(VkPipelineStageFlags sourceStage) { this->sourceStage = sourceStage; }
+        inline void setDestinationStage(VkPipelineStageFlags destinationStage) { this->destinationStage = destinationStage; }
 };
 
 #endif

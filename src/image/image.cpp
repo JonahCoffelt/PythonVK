@@ -4,13 +4,15 @@ Image::Image(
     LogicalDevice* device, 
     uint32_t width, 
     uint32_t height, 
+    uint32_t mip_levels,
     VkFormat format, 
     VkImageTiling tiling,
     VkImageUsageFlags usage,
+    VkSampleCountFlagBits sampleCount,
     VkMemoryPropertyFlags memoryType,
     VkSharingMode sharingMode,
     VkFlags flags
-): device(device), width(width), height(height), format(format), tiling(tiling), usage(usage), memoryType(memoryType), sharingMode(sharingMode), flags(flags) {
+): device(device), width(width), height(height), mip_levels(mip_levels), layers(1), format(format), tiling(tiling), usage(usage), sampleCount(sampleCount), memoryType(memoryType), sharingMode(sharingMode), flags(flags) {
     setImageCreateInfo();
 
     VkResult result = vkCreateImage(device->getHandle(), &createInfo, nullptr, &image);
@@ -31,7 +33,7 @@ Image::Image(
     uint32_t width,
     uint32_t height,
     VkFormat format
-): image(existingImage), device(device), allocation(nullptr), width(width), height(height), format(format), ownsImage(false) {}
+): image(existingImage), device(device), allocation(nullptr), width(width), height(height), mip_levels(1), layers(1), format(format), sampleCount(VK_SAMPLE_COUNT_1_BIT), ownsImage(false) {}
 
 void Image::setImageCreateInfo() {
     createInfo = {};
@@ -40,13 +42,13 @@ void Image::setImageCreateInfo() {
     createInfo.extent.width = width;
     createInfo.extent.height = height;
     createInfo.extent.depth = 1;
-    createInfo.mipLevels = 1;
-    createInfo.arrayLayers = 1;
+    createInfo.mipLevels = mip_levels;
+    createInfo.arrayLayers = layers;
     createInfo.format = format;
     createInfo.tiling = tiling;
     createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     createInfo.usage = usage;
-    createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    createInfo.samples = sampleCount;
     createInfo.sharingMode = sharingMode;
     createInfo.flags = flags;
 }

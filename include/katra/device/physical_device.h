@@ -103,6 +103,7 @@ class PhysicalDevice {
         inline const uint8_t* getPipelineCacheUUID() const { return deviceProperties.pipelineCacheUUID; }
         inline const VkPhysicalDeviceLimits& getLimits() const { return deviceProperties.limits; }
         inline const VkPhysicalDeviceSparseProperties& getSparseProperties() const { return deviceProperties.sparseProperties; }
+        VkSampleCountFlagBits getMaxUsableSampleCount();
 
         // Device Features
         // General

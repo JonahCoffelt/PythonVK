@@ -17,14 +17,16 @@ class Image {
         VkImageCreateInfo createInfo;
         uint32_t width;
         uint32_t height;
+        uint32_t mip_levels;
+        uint32_t layers;
         VkFormat format;
         VkImageTiling tiling;
         VkImageUsageFlags usage;
+        VkSampleCountFlagBits sampleCount;
         VkMemoryPropertyFlags memoryType;
         VkSharingMode sharingMode;
         VkFlags flags;
         bool ownsImage = true;
-
         void setImageCreateInfo();
 
     public:
@@ -32,9 +34,11 @@ class Image {
             LogicalDevice* device, 
             uint32_t width, 
             uint32_t height, 
+            uint32_t mip_levels,
             VkFormat format, 
             VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL,
             VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
+            VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT,
             VkMemoryPropertyFlags memoryType = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
             VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE,
             VkFlags flags = 0
@@ -56,6 +60,8 @@ class Image {
         inline uint32_t getWidth() const { return width; }
         inline uint32_t getHeight() const { return height; }
         inline VkFormat getFormat() const { return format; }
+        inline uint32_t getMipLevels() const { return mip_levels; }
+        inline uint32_t getLayers() const { return layers; }
 };
 
 #endif

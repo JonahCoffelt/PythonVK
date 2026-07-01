@@ -15,6 +15,7 @@ class Sampler {
         VkSamplerMipmapMode mipmapMode;
         VkSamplerAddressMode addressMode;
         float anisotropy;
+        float maxLod;
 
         VkSamplerCreateInfo createInfo{};
 
@@ -26,7 +27,8 @@ class Sampler {
             VkFilter filter = VK_FILTER_LINEAR,
             VkSamplerMipmapMode mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
             VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            float anisotropy = 1.0f
+            float anisotropy = 1.0f,
+            float maxLod = VK_LOD_CLAMP_NONE
         );
         ~Sampler();
         Sampler(const Sampler&) = delete;
@@ -35,6 +37,8 @@ class Sampler {
         inline const VkSampler& getHandle() const { return sampler; }
         inline const VkSamplerCreateInfo& getCreateInfo() const { return createInfo; }
         inline LogicalDevice* getLogicalDevice() { return device; }
+        inline float getAnisotropy() { return anisotropy; }
+        inline float getMaxLod() { return maxLod; }
 };
 
 #endif
