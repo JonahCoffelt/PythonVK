@@ -286,7 +286,7 @@ private:
             VK_FILTER_LINEAR, 
             VK_SAMPLER_MIPMAP_MODE_LINEAR, 
             VK_SAMPLER_ADDRESS_MODE_REPEAT, 
-            16.0f
+            static_cast<float>(mip_levels)
         );
 
         generateMipmaps(textureImage);
